@@ -3,7 +3,7 @@
 from pwn import *
 
 BINDINGS
-context.binary = elf
+context.binary = exe
 
 
 def conn():

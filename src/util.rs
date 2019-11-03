@@ -244,7 +244,7 @@ fn make_bindings(opts: &Opts) -> String {
     };
     format!(
         "{}{}{}",
-        bind_line("elf", opts.bin()),
+        bind_line("exe", opts.bin()),
         bind_line("libc", opts.libc()),
         bind_line("ld", opts.ld())
     )
