@@ -1,3 +1,5 @@
+//! Libc version operations
+
 use crate::cpu_arch::CpuArch;
 use crate::Result;
 
@@ -8,19 +10,31 @@ use std::path::Path;
 
 use twoway::find_bytes;
 
+/// Libc version information
 pub struct LibcVersion {
+    /// Long string representation of a libc version
+    ///
+    /// Example: `"2.23-0ubuntu10"`
     pub string: String,
+
+    /// Short string representation of a libc version
+    ///
+    /// Example: `"2.23"`
     pub string_short: String,
+
+    /// Architecture of libc
     pub arch: CpuArch,
 }
 
 impl fmt::Display for LibcVersion {
+    /// Write libc version in format used by Ubuntu repositories
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}_{}", self.string, self.arch)
     }
 }
 
 impl LibcVersion {
+    /// Return version detection error
     fn error() -> io::Error {
         io::Error::new(
             io::ErrorKind::InvalidData,
@@ -28,6 +42,7 @@ impl LibcVersion {
         )
     }
 
+    /// Detect the version of a libc
     pub fn detect(libc: &Path) -> Result<Self> {
         let bytes = fs::read(libc)?;
         let string = Self::version_string_from_bytes(&bytes)?;
@@ -44,6 +59,7 @@ impl LibcVersion {
         })
     }
 
+    /// Extract the long version string from the bytes of a libc
     fn version_string_from_bytes(libc: &[u8]) -> Result<String> {
         let split = b"GNU C Library (Ubuntu GLIBC ";
         let pos = find_bytes(&libc, split).ok_or_else(LibcVersion::error)?;
