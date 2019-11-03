@@ -3,8 +3,11 @@ name = "pwninit"
 version = "0.1.0"
 authors = ["Benjamin Levy <blevy@protonmail.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "automate starting binary exploit challenges"
+repository = "https://github.com/io12/pwninit"
+readme = "README.md"
+keywords = ["pwn", "init", "binary", "elf", "exploit", "pwntools", "cli"]
+license = "MIT"
 
 [dependencies]
 twoway = "0.2.1"
