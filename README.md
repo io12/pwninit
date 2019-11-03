@@ -25,15 +25,13 @@ Run `pwninit` in a directory with the relevant files and it will detect which on
 
 Install [`pwninit`](https://aur.archlinux.org/packages/pwninit/) from the AUR.
 
-### Other
+### Using cargo
 
 ```sh
-git clone https://github.com/io12/pwninit`
-cd pwninit
-cargo install --path .
+cargo install pwninit
 ```
 
-The binary will be in `~/.cargo/bin`.
+The binary will be placed in `~/.cargo/bin`.
 
 ## Example
 
