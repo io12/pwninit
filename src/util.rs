@@ -76,7 +76,7 @@ fn tar_entry_matches<R: Read>(entry: &io::Result<tar::Entry<R>>, file_name: &str
 
 /// Download linker compatible with libc version `ver` and save to directory
 /// `dir`
-fn fetch_ld(dir: &Path, ver: &LibcVersion) -> Result<()> {
+fn fetch_ld(ver: &LibcVersion) -> Result<()> {
     println!("{}", "fetching linker".green().bold());
 
     let error = || io::Error::new(io::ErrorKind::NotFound, "failed to fetch linker");
@@ -93,8 +93,7 @@ fn fetch_ld(dir: &Path, ver: &LibcVersion) -> Result<()> {
                 .entries()?
                 .find(|entry| tar_entry_matches(entry, &ld_name))
                 .ok_or_else(error)??;
-            let path = dir.join(ld_name);
-            io::copy(&mut ld_entry, &mut File::create(path)?)?;
+            io::copy(&mut ld_entry, &mut File::create(ld_name)?)?;
             return Ok(());
         }
     }
@@ -104,9 +103,9 @@ fn fetch_ld(dir: &Path, ver: &LibcVersion) -> Result<()> {
 /// Same as `fetch_ld()`, but doesn't do anything if an existing linker is
 /// detected
 fn maybe_fetch_ld(opts: &Opts, ver: &LibcVersion) -> Result<()> {
-    match opts.ld() {
+    match opts.ld {
         Some(_) => Ok(()),
-        None => fetch_ld(opts.dir(), ver),
+        None => fetch_ld(ver),
     }
 }
 
@@ -168,7 +167,7 @@ fn visit_libc(opts: &Opts, libc: &Path) -> Result<()> {
 
 /// Same as `visit_libc()`, but doesn't do anything if no libc is found
 pub fn maybe_visit_libc(opts: &Opts) -> Result<()> {
-    match opts.libc() {
+    match &opts.libc {
         Some(libc) => visit_libc(opts, &libc),
         None => Ok(()),
     }
@@ -186,7 +185,8 @@ pub fn set_exec<P: AsRef<Path>>(path: P) -> Result<()> {
 /// Set the detected binary executable
 pub fn set_bin_exec(opts: &Opts) -> Result<()> {
     let bin = opts
-        .bin()
+        .bin
+        .as_ref()
         .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "binary not found"))?;
 
     if !bin.is_executable() {
@@ -204,7 +204,7 @@ pub fn set_bin_exec(opts: &Opts) -> Result<()> {
 
 /// Set the detected linker executable
 pub fn set_ld_exec(opts: &Opts) -> Result<()> {
-    match &opts.ld() {
+    match &opts.ld {
         Some(ld) if !ld.is_executable() => {
             println!(
                 "{}",
@@ -237,16 +237,17 @@ pub fn has_debug_syms(path: &Path) -> Result<bool> {
 /// Make pwntools script that binds the (binary, libc, linker) to `ELF`
 /// variables
 fn make_bindings(opts: &Opts) -> String {
-    let bind_line = |name: &str, opt_path: Option<PathBuf>| {
+    let bind_line = |name: &str, opt_path: &Option<PathBuf>| {
         opt_path
+            .as_ref()
             .map(|path| format!("{} = ELF(\"{}\")\n", name, path.display()))
             .unwrap_or_else(|| "".to_string())
     };
     format!(
         "{}{}{}",
-        bind_line("exe", opts.bin()),
-        bind_line("libc", opts.libc()),
-        bind_line("ld", opts.ld())
+        bind_line("exe", &opts.bin),
+        bind_line("libc", &opts.libc),
+        bind_line("ld", &opts.ld)
     )
 }
 
@@ -254,12 +255,12 @@ fn make_bindings(opts: &Opts) -> String {
 fn make_proc_args(opts: &Opts) -> String {
     format!(
         "[{}]{}",
-        if opts.has_ld() {
+        if opts.ld.is_some() {
             "ld.path, exe.path"
         } else {
             "exe.path"
         },
-        if opts.has_libc() {
+        if opts.libc.is_some() {
             ", env={\"LD_PRELOAD\": libc.path}"
         } else {
             ""
@@ -281,7 +282,7 @@ fn make_solvepy_stub(opts: &Opts) -> String {
 /// specified directory, unless a `solve.py` already exists
 pub fn write_solvepy_stub(opts: &Opts) -> Result<()> {
     let stub = make_solvepy_stub(opts);
-    let path = opts.dir().join("solve.py");
+    let path = Path::new("solve.py");
     if !path.exists() {
         println!("{}", "writing solve.py stub".magenta().bold());
         fs::write(&path, stub)?;

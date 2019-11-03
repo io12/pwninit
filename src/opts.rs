@@ -12,24 +12,20 @@ use colored::Color;
 use colored::Colorize;
 use structopt::StructOpt;
 
-/// Command-line options
+/// automate starting binary exploit challenges
 #[derive(StructOpt)]
 pub struct Opts {
-    /// Working directory
-    #[structopt(long, default_value = ".")]
-    dir: PathBuf,
-
     /// Binary to pwn
     #[structopt(long)]
-    bin: Option<PathBuf>,
+    pub bin: Option<PathBuf>,
 
     /// Challenge libc
     #[structopt(long)]
-    libc: Option<PathBuf>,
+    pub libc: Option<PathBuf>,
 
-    /// An ld-linux.so to load libc
+    /// A linker to preload the libc
     #[structopt(long)]
-    ld: Option<PathBuf>,
+    pub ld: Option<PathBuf>,
 }
 
 impl Opts {
@@ -52,7 +48,7 @@ impl Opts {
 
     /// For the unspecified files, try to guess their path
     pub fn find_if_unspec(self) -> Result<Self> {
-        let dir = fs::read_dir(&self.dir)?;
+        let dir = fs::read_dir(".")?;
         let opts = dir.fold(self, Opts::merge_result_entry);
         Ok(opts)
     }
@@ -78,49 +74,9 @@ impl Opts {
         };
 
         Self {
-            dir: self.dir,
             bin: self.bin.or_else(|| f(util::is_bin)),
             libc: self.libc.or_else(|| f(util::is_libc)),
             ld: self.ld.or_else(|| f(util::is_ld)),
         }
-    }
-
-    /// If `path` is relative, rebase it onto `self.dir`
-    fn dir_rebase(&self, path: &Path) -> PathBuf {
-        if path.is_absolute() || self.dir == Path::new(".") {
-            path.to_path_buf()
-        } else {
-            self.dir.join(path)
-        }
-    }
-
-    /// Path of the working directory
-    pub fn dir(&self) -> &Path {
-        &self.dir
-    }
-
-    /// Path of the provided binary
-    pub fn bin(&self) -> Option<PathBuf> {
-        Some(self.dir_rebase(self.bin.as_ref()?))
-    }
-
-    /// Path of the provided libc
-    pub fn libc(&self) -> Option<PathBuf> {
-        Some(self.dir_rebase(self.libc.as_ref()?))
-    }
-
-    /// Path of the provided linker
-    pub fn ld(&self) -> Option<PathBuf> {
-        Some(self.dir_rebase(self.ld.as_ref()?))
-    }
-
-    /// Do we have a libc?
-    pub fn has_libc(&self) -> bool {
-        self.libc.is_some()
-    }
-
-    /// Do we have a linker?
-    pub fn has_ld(&self) -> bool {
-        self.ld.is_some()
     }
 }
