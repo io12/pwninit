@@ -74,8 +74,9 @@ fn tar_entry_matches<R: Read>(entry: &io::Result<tar::Entry<R>>, file_name: &str
     }
 }
 
-/// Download and save linker compatible with libc version `ver`
-fn fetch_ld(ver: &LibcVersion) -> Result<()> {
+/// Download linker compatible with libc version `ver` and save to directory
+/// `dir`
+fn fetch_ld(dir: &Path, ver: &LibcVersion) -> Result<()> {
     println!("{}", "fetching linker".green().bold());
 
     let error = || io::Error::new(io::ErrorKind::NotFound, "failed to fetch linker");
@@ -92,8 +93,8 @@ fn fetch_ld(ver: &LibcVersion) -> Result<()> {
                 .entries()?
                 .find(|entry| tar_entry_matches(entry, &ld_name))
                 .ok_or_else(error)??;
-            // TODO: Rebase path
-            io::copy(&mut ld_entry, &mut File::create(&ld_name)?)?;
+            let path = dir.join(ld_name);
+            io::copy(&mut ld_entry, &mut File::create(path)?)?;
             return Ok(());
         }
     }
@@ -105,7 +106,7 @@ fn fetch_ld(ver: &LibcVersion) -> Result<()> {
 fn maybe_fetch_ld(opts: &Opts, ver: &LibcVersion) -> Result<()> {
     match opts.ld() {
         Some(_) => Ok(()),
-        None => fetch_ld(ver),
+        None => fetch_ld(opts.dir(), ver),
     }
 }
 
