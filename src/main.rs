@@ -7,6 +7,7 @@ mod util;
 
 use crate::opts::Opts;
 
+use colored::Colorize;
 use structopt::StructOpt;
 
 /// ~Result~ wrapper that specialized ~Result~ types can convert to
@@ -37,7 +38,7 @@ fn try_main() -> Result<()> {
 /// Top-level error catcher
 fn main() {
     if let Err(err) = try_main() {
-        eprintln!("pwninit: error: {}", err);
+        eprintln!("{}", format!("error: {}", err).red().bold());
         std::process::exit(1);
     }
 }
