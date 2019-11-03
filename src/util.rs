@@ -255,9 +255,9 @@ fn make_proc_args(opts: &Opts) -> String {
     format!(
         "[{}]{}",
         if opts.has_ld() {
-            "ld.path, elf.path"
+            "ld.path, exe.path"
         } else {
-            "elf.path"
+            "exe.path"
         },
         if opts.has_libc() {
             ", env={\"LD_PRELOAD\": libc.path}"
