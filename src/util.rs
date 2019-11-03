@@ -1,3 +1,5 @@
+//! Utility functions that provide the bulk of ~pwninit~ functionality
+
 use colored::Colorize;
 use goblin::elf::Elf;
 use is_executable::IsExecutable;
@@ -20,9 +22,11 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
 
-// One of the few Ubuntu mirrors that uses HTTPS
+/// URL for Ubuntu glibc packages. (From one of the few Ubuntu mirrors that uses
+/// HTTPS)
 static LIBC_URL: &str = "https://lug.mtu.edu/ubuntu/pool/main/g/glibc";
 
+/// Helper for `is_elf` that uses `Result` early returns for conciseness
 fn is_elf_result(path: &Path) -> Result<bool> {
     Ok(File::open(path)?
         .bytes()
@@ -31,28 +35,35 @@ fn is_elf_result(path: &Path) -> Result<bool> {
         == b"\x7fELF")
 }
 
+/// Is the binary at `path` an ELF?
 fn is_elf(path: &Path) -> bool {
     is_elf_result(path).unwrap_or(false)
 }
 
+/// Detect if `path` is the provided pwn binary
 pub fn is_bin(path: &Path) -> bool {
     is_elf(path) && !is_libc(path) && !is_ld(path)
 }
 
+/// Does the filename of `path` contain `pattern`?
 fn path_contains(path: &Path, pattern: &[u8]) -> bool {
     path.file_name()
         .map(|name| find_bytes(name.as_bytes(), pattern).is_some())
         .unwrap_or(false)
 }
 
+/// Detect if `path` is the provided libc
 pub fn is_libc(path: &Path) -> bool {
     is_elf(path) && path_contains(path, b"libc")
 }
 
+/// Detect if `path` is the provided linker
 pub fn is_ld(path: &Path) -> bool {
     is_elf(path) && path_contains(path, b"ld-")
 }
 
+/// Helper function for `fetch_ld()` that decides whether the tar file `entry`
+/// matches `file_name`
 fn tar_entry_matches<R: Read>(entry: &io::Result<tar::Entry<R>>, file_name: &str) -> bool {
     match entry {
         Ok(entry) => match entry.path() {
@@ -63,10 +74,11 @@ fn tar_entry_matches<R: Read>(entry: &io::Result<tar::Entry<R>>, file_name: &str
     }
 }
 
+/// Download and save linker compatible with libc version `ver`
 fn fetch_ld(ver: &LibcVersion) -> Result<()> {
     println!("{}", "fetching linker".green().bold());
 
-    let error = || io::Error::new(io::ErrorKind::NotFound, "failed to fetch ld-linux.so");
+    let error = || io::Error::new(io::ErrorKind::NotFound, "failed to fetch linker");
     let url = format!("{}/libc6_{}.deb", LIBC_URL, ver);
     let deb_bytes = reqwest::get(&url)?;
     let mut deb = ar::Archive::new(deb_bytes);
@@ -80,6 +92,7 @@ fn fetch_ld(ver: &LibcVersion) -> Result<()> {
                 .entries()?
                 .find(|entry| tar_entry_matches(entry, &ld_name))
                 .ok_or_else(error)??;
+            // TODO: Rebase path
             io::copy(&mut ld_entry, &mut File::create(&ld_name)?)?;
             return Ok(());
         }
@@ -87,6 +100,8 @@ fn fetch_ld(ver: &LibcVersion) -> Result<()> {
     Err(error().into())
 }
 
+/// Same as `fetch_ld()`, but doesn't do anything if an existing linker is
+/// detected
 fn maybe_fetch_ld(opts: &Opts, ver: &LibcVersion) -> Result<()> {
     match opts.ld() {
         Some(_) => Ok(()),
@@ -94,6 +109,7 @@ fn maybe_fetch_ld(opts: &Opts, ver: &LibcVersion) -> Result<()> {
     }
 }
 
+/// Download debug symbols and apply them to a libc
 fn unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result<()> {
     println!("{}", "unstripping libc".yellow().bold());
 
@@ -130,6 +146,8 @@ fn unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result<()> {
     Err(error().into())
 }
 
+/// Same as `unstrip_libc()` but it doesn't do anything if the libc already has
+/// debug symbols
 fn maybe_unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result<()> {
     if !has_debug_syms(libc)? {
         unstrip_libc(libc, ver)?;
@@ -137,6 +155,9 @@ fn maybe_unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result<()> {
     Ok(())
 }
 
+/// Top-level function for libc-dependent tasks
+///   1. Download linker if not found
+///   2. Unstrip libc if libc is stripped
 fn visit_libc(opts: &Opts, libc: &Path) -> Result<()> {
     let ver = LibcVersion::detect(libc)?;
     maybe_fetch_ld(opts, &ver)?;
@@ -144,6 +165,7 @@ fn visit_libc(opts: &Opts, libc: &Path) -> Result<()> {
     Ok(())
 }
 
+/// Same as `visit_libc()`, but doesn't do anything if no libc is found
 pub fn maybe_visit_libc(opts: &Opts) -> Result<()> {
     match opts.libc() {
         Some(libc) => visit_libc(opts, &libc),
@@ -151,6 +173,7 @@ pub fn maybe_visit_libc(opts: &Opts) -> Result<()> {
     }
 }
 
+/// Set the file at `path` executable
 pub fn set_exec<P: AsRef<Path>>(path: P) -> Result<()> {
     let mode = path.as_ref().metadata()?.permissions().mode();
     let mode = mode | umask::EXEC;
@@ -159,6 +182,7 @@ pub fn set_exec<P: AsRef<Path>>(path: P) -> Result<()> {
     Ok(())
 }
 
+/// Set the detected binary executable
 pub fn set_bin_exec(opts: &Opts) -> Result<()> {
     let bin = opts
         .bin()
@@ -177,6 +201,7 @@ pub fn set_bin_exec(opts: &Opts) -> Result<()> {
     Ok(())
 }
 
+/// Set the detected linker executable
 pub fn set_ld_exec(opts: &Opts) -> Result<()> {
     match &opts.ld() {
         Some(ld) if !ld.is_executable() => {
@@ -192,6 +217,11 @@ pub fn set_ld_exec(opts: &Opts) -> Result<()> {
     }
 }
 
+/// Does the ELF at `path` have debug symbols?
+///
+/// Errors:
+///   - Failed to read file
+///   - Failed to parse file as ELF
 pub fn has_debug_syms(path: &Path) -> Result<bool> {
     let bytes = fs::read(path)?;
     let elf = Elf::parse(&bytes)?;
@@ -203,6 +233,8 @@ pub fn has_debug_syms(path: &Path) -> Result<bool> {
     }))
 }
 
+/// Make pwntools script that binds the (binary, libc, linker) to `ELF`
+/// variables
 fn make_bindings(opts: &Opts) -> String {
     let bind_line = |name: &str, opt_path: Option<PathBuf>| {
         opt_path
@@ -217,6 +249,7 @@ fn make_bindings(opts: &Opts) -> String {
     )
 }
 
+/// Make arguments to pwntools `process()` function
 fn make_proc_args(opts: &Opts) -> String {
     format!(
         "[{}]{}",
@@ -233,6 +266,7 @@ fn make_proc_args(opts: &Opts) -> String {
     )
 }
 
+/// Fill in template pwntools solve script with (binary, libc, linker) paths
 fn make_solvepy_stub(opts: &Opts) -> String {
     let templ = include_str!("solve.py");
     let bindings = make_bindings(opts);
@@ -242,6 +276,8 @@ fn make_solvepy_stub(opts: &Opts) -> String {
         .replace("PROC_ARGS", &proc_args)
 }
 
+/// Write script produced with `make_solvepy_stub()` to `solve.py` in the
+/// specified directory, unless a `solve.py` already exists
 pub fn write_solvepy_stub(opts: &Opts) -> Result<()> {
     let stub = make_solvepy_stub(opts);
     let path = opts.dir().join("solve.py");
