@@ -1,3 +1,5 @@
+//! Command-line option handling
+
 use crate::util;
 use crate::Result;
 
@@ -31,6 +33,7 @@ pub struct Opts {
 }
 
 impl Opts {
+    /// Print the locations of known files (binary, libc, linker)
     pub fn print(&self) {
         let f = |opt_path: &Option<PathBuf>, header: &str, color| {
             if let Some(path) = opt_path {
@@ -47,12 +50,14 @@ impl Opts {
         f(&self.ld, "ld", Color::Green);
     }
 
+    /// For the unspecified files, try to guess their path
     pub fn find_if_unspec(self) -> Result<Self> {
         let dir = fs::read_dir(&self.dir)?;
         let opts = dir.fold(self, Opts::merge_result_entry);
         Ok(opts)
     }
 
+    /// Helper for `find_if_unspec()`, merging the `Opts` with a directory entry
     fn merge_result_entry(self, dir_ent: io::Result<fs::DirEntry>) -> Self {
         match dir_ent {
             Ok(ent) => self.merge_entry(ent),
@@ -60,6 +65,8 @@ impl Opts {
         }
     }
 
+    /// Helper for `merge_result_entry()`, merging the `Opts` with a directory
+    /// entry
     fn merge_entry(self, dir_ent: fs::DirEntry) -> Self {
         let f = |pred: fn(&Path) -> bool| {
             let path = dir_ent.path();
@@ -78,6 +85,7 @@ impl Opts {
         }
     }
 
+    /// If `path` is relative, rebase it onto `self.dir`
     fn dir_rebase(&self, path: &Path) -> PathBuf {
         if path.is_absolute() || self.dir == Path::new(".") {
             path.to_path_buf()
@@ -86,26 +94,32 @@ impl Opts {
         }
     }
 
+    /// Path of the working directory
     pub fn dir(&self) -> &Path {
         &self.dir
     }
 
+    /// Path of the provided binary
     pub fn bin(&self) -> Option<PathBuf> {
         Some(self.dir_rebase(self.bin.as_ref()?))
     }
 
+    /// Path of the provided libc
     pub fn libc(&self) -> Option<PathBuf> {
         Some(self.dir_rebase(self.libc.as_ref()?))
     }
 
+    /// Path of the provided linker
     pub fn ld(&self) -> Option<PathBuf> {
         Some(self.dir_rebase(self.ld.as_ref()?))
     }
 
+    /// Do we have a libc?
     pub fn has_libc(&self) -> bool {
         self.libc.is_some()
     }
 
+    /// Do we have a linker?
     pub fn has_ld(&self) -> bool {
         self.ld.is_some()
     }
