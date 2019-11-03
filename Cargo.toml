@@ -6,7 +6,7 @@ edition = "2018"
 description = "automate starting binary exploit challenges"
 repository = "https://github.com/io12/pwninit"
 readme = "README.md"
-keywords = ["pwn", "init", "binary", "elf", "exploit", "pwntools", "cli"]
+keywords = ["pwn", "init", "binary", "elf", "exploit"]
 license = "MIT"
 
 [dependencies]
