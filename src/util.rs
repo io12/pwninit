@@ -11,6 +11,7 @@ use crate::libc_version::LibcVersion;
 use crate::opts::Opts;
 use crate::Result;
 
+use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::io;
@@ -158,18 +159,22 @@ fn maybe_unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result<()> {
 /// Top-level function for libc-dependent tasks
 ///   1. Download linker if not found
 ///   2. Unstrip libc if libc is stripped
-fn visit_libc(opts: &Opts, libc: &Path) -> Result<()> {
-    let ver = LibcVersion::detect(libc)?;
-    maybe_fetch_ld(opts, &ver)?;
-    maybe_unstrip_libc(libc, &ver)?;
-    Ok(())
+fn visit_libc(opts: &Opts, libc: &Path) {
+    let ver = match LibcVersion::detect(libc) {
+        Ok(ver) => ver,
+        Err(err) => {
+            warn(err);
+            return;
+        }
+    };
+    warn_res(maybe_fetch_ld(opts, &ver));
+    warn_res(maybe_unstrip_libc(libc, &ver));
 }
 
 /// Same as `visit_libc()`, but doesn't do anything if no libc is found
-pub fn maybe_visit_libc(opts: &Opts) -> Result<()> {
-    match &opts.libc {
-        Some(libc) => visit_libc(opts, &libc),
-        None => Ok(()),
+pub fn maybe_visit_libc(opts: &Opts) {
+    if let Some(libc) = &opts.libc {
+        visit_libc(opts, &libc)
     }
 }
 
@@ -284,9 +289,19 @@ pub fn write_solvepy_stub(opts: &Opts) -> Result<()> {
     let stub = make_solvepy_stub(opts);
     let path = Path::new("solve.py");
     if !path.exists() {
-        println!("{}", "writing solve.py stub".magenta().bold());
+        println!("{}", "writing solve.py stub".cyan().bold());
         fs::write(&path, stub)?;
         set_exec(&path)?;
     }
     Ok(())
+}
+
+pub fn warn(error: Box<dyn Error>) {
+    eprintln!("{}", format!("warning: {}", error).magenta().bold())
+}
+
+pub fn warn_res(res: Result<()>) {
+    if let Err(error) = res {
+        warn(error)
+    }
 }

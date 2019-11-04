@@ -24,7 +24,7 @@ fn try_main() -> Result<()> {
     println!();
 
     util::set_bin_exec(&opts)?;
-    util::maybe_visit_libc(&opts)?;
+    util::maybe_visit_libc(&opts);
 
     // Redo detection in case the ld was downloaded
     let opts = opts.find_if_unspec()?;
