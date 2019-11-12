@@ -1,13 +1,17 @@
 //! Libc version operations
 
+use crate::cpu_arch;
 use crate::cpu_arch::CpuArch;
-use crate::Result;
 
 use std::fmt;
-use std::fs;
-use std::io;
 use std::path::Path;
+use std::str;
 
+use ex::fs;
+use ex::io;
+use snafu::OptionExt;
+use snafu::ResultExt;
+use snafu::Snafu;
 use twoway::find_bytes;
 
 /// Libc version information
@@ -33,43 +37,48 @@ impl fmt::Display for LibcVersion {
     }
 }
 
-impl LibcVersion {
-    /// Return version detection error
-    fn error() -> io::Error {
-        io::Error::new(
-            io::ErrorKind::InvalidData,
-            "failed to determine libc version (note that this only works on ubuntu glibc)",
-        )
-    }
+#[derive(Debug, Snafu)]
+pub enum Error {
+    #[snafu(display("failed reading file: {}", source))]
+    ReadError { source: io::Error },
 
+    #[snafu(display("failed finding version string"))]
+    NotFoundError,
+
+    #[snafu(display("invalid architecture: {}", source))]
+    ArchError { source: cpu_arch::Error },
+
+    #[snafu(display("invalid UTF-8 in version string: {}", source))]
+    Utf8Error { source: str::Utf8Error },
+}
+
+pub type Result<T> = std::result::Result<T, Error>;
+
+impl LibcVersion {
     /// Detect the version of a libc
     pub fn detect(libc: &Path) -> Result<Self> {
-        let bytes = fs::read(libc)?;
+        let bytes = fs::read(libc).context(ReadError)?;
         let string = Self::version_string_from_bytes(&bytes)?;
-        let string_short = string
-            .split('-')
-            .next()
-            .ok_or_else(Self::error)?
-            .to_string();
+        let string_short = string.split('-').next().context(NotFoundError)?.to_string();
 
         Ok(Self {
             string,
             string_short,
-            arch: CpuArch::from_elf_bytes(&bytes)?,
+            arch: CpuArch::from_elf_bytes(libc, &bytes).context(ArchError)?,
         })
     }
 
     /// Extract the long version string from the bytes of a libc
     fn version_string_from_bytes(libc: &[u8]) -> Result<String> {
         let split = b"GNU C Library (Ubuntu GLIBC ";
-        let pos = find_bytes(&libc, split).ok_or_else(LibcVersion::error)?;
+        let pos = find_bytes(&libc, split).context(NotFoundError)?;
         let ver_str = &libc[pos + split.len()..];
         let pos = ver_str
             .iter()
             .position(|&c| c == b')')
-            .ok_or_else(LibcVersion::error)?;
+            .context(NotFoundError)?;
         let ver_str = &ver_str[..pos];
-        let ver_str = std::str::from_utf8(ver_str)?.to_string();
+        let ver_str = std::str::from_utf8(ver_str).context(Utf8Error)?.to_string();
         Ok(ver_str)
     }
 }
