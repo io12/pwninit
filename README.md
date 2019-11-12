@@ -5,7 +5,7 @@ A tool for automating starting binary exploit challenges
 ## Features
 
 - Set challenge binary to be executable
-- Download a linker (`ld-linux.so.*`) that can flawlessly `LD_PRELOAD` the provided libc
+- Download a linker (`ld-linux.so.*`) that can segfaultlessly `LD_PRELOAD` the provided libc
 - Download debug symbols and unstrip the libc
 - Fill in a template pwntools solve script
 
