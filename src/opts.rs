@@ -51,7 +51,8 @@ pub struct Opts {
     #[setters(generate)]
     pub ld: Option<PathBuf>,
 
-    /// Path to custom pwntools solve script template
+    /// Path to custom pwntools solve script template. Check the README for more
+    /// information.
     #[structopt(long)]
     pub template_path: Option<PathBuf>,
 
