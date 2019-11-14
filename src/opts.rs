@@ -5,13 +5,14 @@ use crate::is_bin;
 use crate::is_ld;
 use crate::is_libc;
 
-use ex::fs;
-use ex::io;
 use std::path::Path;
 use std::path::PathBuf;
 
 use colored::Color;
 use colored::Colorize;
+use derive_setters::Setters;
+use ex::fs;
+use ex::io;
 use snafu::ResultExt;
 use snafu::Snafu;
 use structopt::StructOpt;
@@ -31,19 +32,43 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// automate starting binary exploit challenges
-#[derive(StructOpt)]
+#[derive(StructOpt, Setters, Clone)]
+#[setters(generate = "false")]
+#[setters(prefix = "with_")]
 pub struct Opts {
     /// Binary to pwn
     #[structopt(long)]
+    #[setters(generate)]
     pub bin: Option<PathBuf>,
 
     /// Challenge libc
     #[structopt(long)]
+    #[setters(generate)]
     pub libc: Option<PathBuf>,
 
     /// A linker to preload the libc
     #[structopt(long)]
+    #[setters(generate)]
     pub ld: Option<PathBuf>,
+
+    /// Path to custom pwntools solve script template
+    #[structopt(long)]
+    pub template_path: Option<PathBuf>,
+
+    /// Name of binary variable for pwntools solve script
+    #[structopt(long)]
+    #[structopt(default_value = "exe")]
+    pub template_bin_name: String,
+
+    /// Name of libc variable for pwntools solve script
+    #[structopt(long)]
+    #[structopt(default_value = "libc")]
+    pub template_libc_name: String,
+
+    /// Name of linker variable for pwntools solve script
+    #[structopt(long)]
+    #[structopt(default_value = "ld")]
+    pub template_ld_name: String,
 }
 
 impl Opts {
@@ -85,10 +110,10 @@ impl Opts {
             Ok(if pred(&path)? { Some(path) } else { None })
         };
 
-        Ok(Self {
-            bin: self.bin.or(f(is_bin)?),
-            libc: self.libc.or(f(is_libc)?),
-            ld: self.ld.or(f(is_ld)?),
-        })
+        Ok(self
+            .clone()
+            .with_bin(self.bin.or(f(is_bin)?))
+            .with_libc(self.libc.or(f(is_libc)?))
+            .with_ld(self.ld.or(f(is_ld)?)))
     }
 }

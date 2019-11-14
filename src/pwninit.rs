@@ -22,7 +22,7 @@ pub enum Error {
     SetLdExecError { source: io::Error },
 
     #[snafu(display("failed making template solve script: {}", source))]
-    SolvepyError { source: io::Error },
+    SolvepyError { source: solvepy::Error },
 }
 
 pub type Result = std::result::Result<(), Error>;

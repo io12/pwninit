@@ -2,13 +2,14 @@
 
 from pwn import *
 
-BINDINGS
-context.binary = exe
+{bindings}
+
+context.binary = {bin_name}
 
 
 def conn():
     if args.LOCAL:
-        return process(PROC_ARGS)
+        return process({proc_args})
     else:
         return remote("addr", 1337)
 
