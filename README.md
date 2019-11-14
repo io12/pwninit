@@ -19,6 +19,20 @@ Run `pwninit`
 
 Run `pwninit` in a directory with the relevant files and it will detect which ones are the binary, libc, and linker. If the detection is wrong, you can specify the locations with `--bin`, `--libc`, and `--ld`.
 
+#### Custom `solve.py` template
+
+If you don't like the default template, you can use your own. Just specify `--template-path <path>`. Check [template.py](src/template.py) for the template format. The names of the `exe`, `libc`, and `ld` bindings can be customized with `--template-bin-name`, `--template-libc-name`, and `--template-ld-name`.
+
+##### Persisting custom `solve.py`
+
+You can make `pwninit` load your custom template automatically by adding an alias to your `~/.bashrc`.
+
+###### Example
+
+```bash
+alias pwninit='pwninit --template-path ~/.config/pwninit-template.py --template-bin-name e'
+```
+
 ## Install
 
 ### Arch Linux
