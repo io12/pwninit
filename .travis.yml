@@ -25,7 +25,6 @@ deploy:
   api_key: $GITHUB_TOKEN
   file: target/release/pwninit
   on:
-    condition: $TRAVIS_RUST_VERSION = stable
     tags: true
   provider: releases
   skip_cleanup: true
