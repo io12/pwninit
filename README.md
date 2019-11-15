@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/io12/pwninit.svg?branch=master)](https://travis-ci.org/io12/pwninit)
+[![](https://img.shields.io/crates/v/pwninit)](https://crates.io/crates/pwninit)
+[![](https://docs.rs/pwninit/badge.svg)](https://docs.rs/pwninit)
+
 # `pwninit`
 
 A tool for automating starting binary exploit challenges
