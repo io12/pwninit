@@ -1,6 +1,9 @@
 set -ex
 
 main() {
+    # Apt dependencies
+    sudo apt-get -y install liblzma-dev
+
     local target=
     if [ $TRAVIS_OS_NAME = linux ]; then
         target=x86_64-unknown-linux-musl
