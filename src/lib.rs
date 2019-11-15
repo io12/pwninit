@@ -12,8 +12,8 @@ mod solvepy;
 mod unstrip_libc;
 mod warn;
 
-pub use pwninit::run;
-pub use pwninit::Result;
+pub use crate::pwninit::run;
+pub use crate::pwninit::Result;
 
 use crate::elf::detect::is_elf;
 pub use crate::fetch_ld::fetch_ld;
