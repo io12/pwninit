@@ -41,7 +41,8 @@ alias pwninit='pwninit --template-path ~/.config/pwninit-template.py --template-
 
 ### Arch Linux
 
-Install [`pwninit`](https://aur.archlinux.org/packages/pwninit/) from the AUR.
+Install [`pwninit`](https://aur.archlinux.org/packages/pwninit/) or
+[`pwninit-bin`](https://aur.archlinux.org/packages/pwninit-bin/) from the AUR.
 
 ### Download
 
