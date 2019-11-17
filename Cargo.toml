@@ -9,6 +9,10 @@ readme = "README.md"
 keywords = ["pwn", "init", "binary", "elf", "exploit"]
 license = "MIT"
 
+[profile.release]
+opt-level = 'z'
+lto = true
+
 [dependencies]
 twoway = "0.2.1"
 structopt = "0.3.3"
