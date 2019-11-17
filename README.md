@@ -43,6 +43,11 @@ alias pwninit='pwninit --template-path ~/.config/pwninit-template.py --template-
 
 Install [`pwninit`](https://aur.archlinux.org/packages/pwninit/) from the AUR.
 
+### Download
+
+You can download non-GMO statically-linked [musl](https://www.musl-libc.org/)
+binaries from the [releases page](https://github.com/io12/pwninit/releases).
+
 ### Using cargo
 
 ```sh
