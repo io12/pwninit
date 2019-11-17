@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/io12/pwninit.svg?branch=master)](https://travis-ci.org/io12/pwninit)
+[![Deploy Status](https://github.com/io12/pwninit/workflows/deploy/badge.svg)](https://github.com/io12/pwninit/actions)
 [![](https://img.shields.io/crates/v/pwninit)](https://crates.io/crates/pwninit)
 [![](https://docs.rs/pwninit/badge.svg)](https://docs.rs/pwninit)
 

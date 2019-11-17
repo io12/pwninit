@@ -1,0 +1,30 @@
+name: deploy
+
+on: release
+
+jobs:
+  deploy:
+    name: Build modified rust-musl-builder docker image and upload to GitHub Releases
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull source
+        uses: actions/checkout@v1
+
+      - name: Set permissions
+        run: chmod --recursive 777 .
+
+      - name: Build statically-linked musl binary
+        run: docker run --mount type=bind,source="$(pwd)",target=/home/rust/src io12/rust-musl-builder-lzma cargo build --release
+
+      - name: Copy binary to working directory
+        run: cp target/x86_64-unknown-linux-musl/release/pwninit .
+
+      - name: Strip binary
+        run: strip pwninit
+
+      - name: Upload to release
+        uses: JasonEtco/upload-to-release@master
+        with:
+          args: pwninit application/x-executable
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
