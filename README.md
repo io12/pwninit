@@ -78,7 +78,7 @@ hunter  ld-2.23.so  libc.so.6  readme  solve.py
 
 `solve.py`:
 ```python
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from pwn import *
 
