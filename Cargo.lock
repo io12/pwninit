@@ -844,7 +844,7 @@ dependencies = [
 
 [[package]]
 name = "pwninit"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "ar 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "colored 1.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
