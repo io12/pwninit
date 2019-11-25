@@ -1,15 +1,24 @@
+use crate::warn::Warn;
+
 use std::io::copy;
 use std::io::Read;
 use std::io::Write;
 
+use colored::Colorize;
 use lzma::LzmaReader;
 use snafu::OptionExt;
 use snafu::ResultExt;
 use snafu::Snafu;
 
-/// URL for Ubuntu glibc packages. (From one of the few Ubuntu mirrors that uses
-/// HTTPS)
-pub static PKG_URL: &str = "https://lug.mtu.edu/ubuntu/pool/main/g/glibc";
+/// URL for new Ubuntu glibc packages. This is of the few Ubuntu mirrors that
+/// uses HTTPS.
+pub static PKG_URL_NEW: &str = "https://lug.mtu.edu/ubuntu/pool/main/g/glibc";
+
+/// URL for old Ubuntu glibc packages. Note that "old package" doesn't
+/// necessarily correspond to "old glibc version." This is one of the few Ubuntu
+/// archive mirrors that uses HTTPS.
+pub static PKG_URL_OLD: &str =
+    "https://mirror.math.princeton.edu/pub/ubuntu-archive/ubuntu/pool/main/g/glibc";
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -55,16 +64,37 @@ pub enum Error {
     DataNotFoundError,
 }
 
+fn request_url(url: &str) -> Result<reqwest::Response> {
+    let resp = reqwest::get(url).context(DownloadError)?;
+    let status = resp.status();
+    if status.is_success() {
+        Ok(resp)
+    } else {
+        Err(Error::DownloadStatusError { status })
+    }
+}
+
+fn request_ubuntu_pkg(deb_file_name: &str) -> Result<reqwest::Response> {
+    let url_new = format!("{}/{}", PKG_URL_NEW, deb_file_name);
+    let url_old = format!("{}/{}", PKG_URL_OLD, deb_file_name);
+
+    match request_url(&url_new) {
+        Ok(resp) => return Ok(resp),
+        Err(err) => {
+            err.warn();
+            println!("{}", "trying archive mirror".bright_blue().bold());
+        }
+    };
+
+    request_url(&url_old)
+}
+
 pub fn write_ubuntu_pkg_file<W: Write>(
-    deb_url: &str,
+    deb_file_name: &str,
     file_name: &str,
     write: &mut W,
 ) -> Result<()> {
-    let deb_bytes = reqwest::get(deb_url).context(DownloadError)?;
-    let status = deb_bytes.status();
-    if !status.is_success() {
-        return Err(Error::DownloadStatusError { status });
-    }
+    let deb_bytes = request_ubuntu_pkg(deb_file_name)?;
     let mut deb = ar::Archive::new(deb_bytes);
 
     while let Some(Ok(entry)) = deb.next_entry() {

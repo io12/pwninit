@@ -53,7 +53,7 @@ pub type Result = std::result::Result<(), Error>;
 fn do_unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result {
     println!("{}", "unstripping libc".yellow().bold());
 
-    let url = format!("{}/libc6-dbg_{}.deb", libc_deb::PKG_URL, ver);
+    let deb_file_name = format!("libc6-dbg_{}.deb", ver);
 
     let tmp_dir_name = "pwninit-unstrip";
     let tmp_dir = TempDir::new(tmp_dir_name).context(TmpDirError)?;
@@ -63,7 +63,7 @@ fn do_unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result {
 
     let name = format!("libc-{}.so", ver.string_short);
 
-    libc_deb::write_ubuntu_pkg_file(&url, &name, &mut sym_file).context(DebError)?;
+    libc_deb::write_ubuntu_pkg_file(&deb_file_name, &name, &mut sym_file).context(DebError)?;
 
     let out = Command::new("eu-unstrip")
         .arg(libc)

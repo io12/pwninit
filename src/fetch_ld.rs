@@ -26,9 +26,9 @@ pub type Result = std::result::Result<(), Error>;
 pub fn fetch_ld(ver: &LibcVersion) -> Result {
     println!("{}", "fetching linker".green().bold());
 
-    let url = format!("{}/libc6_{}.deb", libc_deb::PKG_URL, ver);
+    let deb_file_name = format!("libc6_{}.deb", ver);
     let ld_name = format!("ld-{}.so", ver.string_short);
     let mut ld_file = File::create(&ld_name).context(CreateError)?;
-    libc_deb::write_ubuntu_pkg_file(&url, &ld_name, &mut ld_file).context(DebError)?;
+    libc_deb::write_ubuntu_pkg_file(&deb_file_name, &ld_name, &mut ld_file).context(DebError)?;
     Ok(())
 }
