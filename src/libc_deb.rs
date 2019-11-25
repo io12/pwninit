@@ -64,6 +64,7 @@ pub enum Error {
     DataNotFoundError,
 }
 
+/// Try to download a file from a URL
 fn request_url(url: &str) -> Result<reqwest::Response> {
     let resp = reqwest::get(url).context(DownloadError)?;
     let status = resp.status();
@@ -74,6 +75,8 @@ fn request_url(url: &str) -> Result<reqwest::Response> {
     }
 }
 
+/// Try to get a glibc deb package with a given filename, checking both current
+/// and archive Ubuntu mirrors
 fn request_ubuntu_pkg(deb_file_name: &str) -> Result<reqwest::Response> {
     let url_new = format!("{}/{}", PKG_URL_NEW, deb_file_name);
     let url_old = format!("{}/{}", PKG_URL_OLD, deb_file_name);
@@ -89,6 +92,8 @@ fn request_ubuntu_pkg(deb_file_name: &str) -> Result<reqwest::Response> {
     request_url(&url_old)
 }
 
+/// Download the glibc deb package with a given name, find a file inside it, and
+/// write the file to a specified sink.
 pub fn write_ubuntu_pkg_file<W: Write>(
     deb_file_name: &str,
     file_name: &str,
