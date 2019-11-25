@@ -30,6 +30,12 @@ pub enum Error {
     #[snafu(display("failed to download package from Ubuntu mirror: {}", source))]
     DownloadError { source: reqwest::Error },
 
+    #[snafu(display(
+        "failed to download package from Ubuntu mirror: status code: {}",
+        status
+    ))]
+    DownloadStatusError { status: reqwest::StatusCode },
+
     #[snafu(display("failed decompressing data.tar.xz: {}", source))]
     DataUnzipError { source: lzma::LzmaError },
 
@@ -55,6 +61,10 @@ pub fn write_ubuntu_pkg_file<W: Write>(
     write: &mut W,
 ) -> Result<()> {
     let deb_bytes = reqwest::get(deb_url).context(DownloadError)?;
+    let status = deb_bytes.status();
+    if !status.is_success() {
+        return Err(Error::DownloadStatusError { status });
+    }
     let mut deb = ar::Archive::new(deb_bytes);
 
     while let Some(Ok(entry)) = deb.next_entry() {
