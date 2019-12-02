@@ -57,6 +57,8 @@ cargo install pwninit
 
 The binary will be placed in `~/.cargo/bin`.
 
+Note that `openssl`, `liblzma`, and `pkg-config` are required for the build.
+
 ## Example
 
 ```sh
