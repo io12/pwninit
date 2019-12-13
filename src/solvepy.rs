@@ -36,18 +36,24 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// Make pwntools script that binds the (binary, libc, linker) to `ELF`
 /// variables
 fn make_bindings(opts: &Opts) -> String {
-    let bind_line = |name: &str, opt_path: &Option<PathBuf>| {
+    // Helper to make one binding line
+    let bind_line = |name: &str, opt_path: &Option<PathBuf>| -> Option<String> {
         opt_path
             .as_ref()
-            .map(|path| format!("{} = ELF(\"{}\")", name, path.display()))
-            .unwrap_or_else(|| "".to_string())
+            .map(|path| format!("{} = ELF(\"{}\")", name, path.display(),))
     };
-    format!(
-        "{}\n{}\n{}",
+
+    // Create bindings and join them with newlines
+    [
         bind_line(&opts.template_bin_name, &opts.bin),
         bind_line(&opts.template_libc_name, &opts.libc),
-        bind_line(&opts.template_ld_name, &opts.ld)
-    )
+        bind_line(&opts.template_ld_name, &opts.ld),
+    ]
+    .iter()
+    .filter_map(|x| x.as_ref())
+    .map(|s| s.clone())
+    .collect::<Vec<String>>()
+    .join("\n")
 }
 
 /// Make arguments to pwntools `process()` function
