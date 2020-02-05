@@ -10,9 +10,9 @@ use snafu::OptionExt;
 use snafu::ResultExt;
 use snafu::Snafu;
 
-/// URL for new Ubuntu glibc packages. This is of the few Ubuntu mirrors that
-/// uses HTTPS.
-pub static PKG_URL_NEW: &str = "https://lug.mtu.edu/ubuntu/pool/main/g/glibc";
+/// URL for new Ubuntu glibc packages. This is one of the few Ubuntu mirrors
+/// that uses HTTPS.
+pub static PKG_URL_NEW: &str = "https://mirrors.edge.kernel.org/ubuntu/pool/main/g/glibc";
 
 /// URL for old Ubuntu glibc packages. Note that "old package" doesn't
 /// necessarily correspond to "old glibc version." This is one of the few Ubuntu
