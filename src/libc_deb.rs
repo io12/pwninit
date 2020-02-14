@@ -1,7 +1,11 @@
+use std::ffi::OsStr;
 use std::io::copy;
 use std::io::Read;
 use std::io::Write;
+use std::os::unix::ffi::OsStrExt;
+use std::path::Path;
 
+use flate2::read::GzDecoder;
 use lzma::LzmaReader;
 use snafu::OptionExt;
 use snafu::ResultExt;
@@ -35,23 +39,29 @@ pub enum Error {
     ))]
     DownloadStatusError { status: reqwest::StatusCode },
 
-    #[snafu(display("failed decompressing data.tar.xz: {}", source))]
+    #[snafu(display("failed decompressing data.tar: {}", source))]
     DataUnzipError { source: lzma::LzmaError },
 
-    #[snafu(display("failed getting data.tar.xz entries: {}", source))]
+    #[snafu(display("failed getting data.tar entries: {}", source))]
     DataEntriesError { source: std::io::Error },
 
-    #[snafu(display("failed to find file in data.tar.xz"))]
+    #[snafu(display("failed to find file in data.tar"))]
     FileNotFoundError,
 
-    #[snafu(display("failed reading file entry in data.tar.xz: {}", source))]
+    #[snafu(display("failed reading file entry in data.tar: {}", source))]
     ReadError { source: std::io::Error },
 
     #[snafu(display("failed to write file from deb: {}", source))]
     WriteError { source: std::io::Error },
 
-    #[snafu(display("failed to find data.tar.xz in package"))]
+    #[snafu(display("failed to find data.tar in package"))]
     DataNotFoundError,
+
+    #[snafu(display(
+        "data.tar in package has unknown extension: {}",
+        String::from_utf8_lossy(ext)
+    ))]
+    DataExtError { ext: Vec<u8> },
 }
 
 /// Try to download a file from a URL
@@ -82,20 +92,53 @@ pub fn write_ubuntu_pkg_file<W: Write>(
     let deb_bytes = request_ubuntu_pkg(deb_file_name)?;
     let mut deb = ar::Archive::new(deb_bytes);
 
+    // Try to find data.tar in package
     while let Some(Ok(entry)) = deb.next_entry() {
-        if entry.header().identifier() == b"data.tar.xz" {
-            let data_tar_bytes = LzmaReader::new_decompressor(entry).context(DataUnzipError)?;
-            let mut data_tar = tar::Archive::new(data_tar_bytes);
-            let mut entry = data_tar
-                .entries()
-                .context(DataEntriesError)?
-                .find(|entry| tar_entry_matches(entry, file_name))
-                .context(FileNotFoundError)?
-                .context(ReadError)?;
-            copy(&mut entry, write).context(WriteError)?;
-            return Ok(());
+        let path = entry.header().identifier();
+        let path = Path::new(OsStr::from_bytes(path));
+
+        let stem = path.file_stem().map(OsStr::as_bytes);
+        if stem != Some(b"data.tar") {
+            continue;
         }
+
+        // Detect extension and decompress
+        let ext = path
+            .extension()
+            .map(OsStr::as_bytes)
+            .context(DataNotFoundError)?;
+        match ext {
+            b"gz" => {
+                let data = GzDecoder::new(entry);
+                write_ubuntu_data_tar_file(data, file_name, write)
+            }
+            b"xz" => {
+                let data = LzmaReader::new_decompressor(entry).context(DataUnzipError)?;
+                write_ubuntu_data_tar_file(data, file_name, write)
+            }
+            ext => None.context(DataExtError { ext }),
+        }?;
+
+        return Ok(());
     }
 
     Err(Error::DataNotFoundError)
+}
+
+/// Given the bytes of a data.tar in a glibc deb package, find a file inside it,
+/// and write the file to a specified sink.
+fn write_ubuntu_data_tar_file<R: Read, W: Write>(
+    data_tar_bytes: R,
+    file_name: &str,
+    write: &mut W,
+) -> Result<()> {
+    let mut data_tar = tar::Archive::new(data_tar_bytes);
+    let mut entry = data_tar
+        .entries()
+        .context(DataEntriesError)?
+        .find(|entry| tar_entry_matches(entry, file_name))
+        .context(FileNotFoundError)?
+        .context(ReadError)?;
+    copy(&mut entry, write).context(WriteError)?;
+    Ok(())
 }
