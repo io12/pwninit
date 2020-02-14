@@ -2,8 +2,6 @@ use crate::libc_deb;
 use crate::libc_version::LibcVersion;
 
 use colored::Colorize;
-use ex::fs::File;
-use ex::io;
 use snafu::ResultExt;
 use snafu::Snafu;
 
@@ -11,9 +9,6 @@ use snafu::Snafu;
 pub enum Error {
     #[snafu(display("libc deb error: {}", source))]
     DebError { source: libc_deb::Error },
-
-    #[snafu(display("failed to create linker file: {}", source))]
-    CreateError { source: io::Error },
 
     #[snafu(display("failed writing to linker file: {}", source))]
     WriteError { source: std::io::Error },
@@ -28,7 +23,6 @@ pub fn fetch_ld(ver: &LibcVersion) -> Result {
 
     let deb_file_name = format!("libc6_{}.deb", ver);
     let ld_name = format!("ld-{}.so", ver.string_short);
-    let mut ld_file = File::create(&ld_name).context(CreateError)?;
-    libc_deb::write_ubuntu_pkg_file(&deb_file_name, &ld_name, &mut ld_file).context(DebError)?;
+    libc_deb::write_ubuntu_pkg_file(&deb_file_name, &ld_name, &ld_name).context(DebError)?;
     Ok(())
 }

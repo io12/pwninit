@@ -1,10 +1,11 @@
 use std::ffi::OsStr;
 use std::io::copy;
 use std::io::Read;
-use std::io::Write;
 use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 
+use ex::fs::File;
+use ex::io;
 use flate2::read::GzDecoder;
 use lzma::LzmaReader;
 use snafu::OptionExt;
@@ -54,6 +55,9 @@ pub enum Error {
     #[snafu(display("failed to write file from deb: {}", source))]
     WriteError { source: std::io::Error },
 
+    #[snafu(display("failed to create file: {}", source))]
+    CreateError { source: io::Error },
+
     #[snafu(display("failed to find data.tar in package"))]
     DataNotFoundError,
 
@@ -83,12 +87,14 @@ fn request_ubuntu_pkg(deb_file_name: &str) -> Result<reqwest::Response> {
 }
 
 /// Download the glibc deb package with a given name, find a file inside it, and
-/// write the file to a specified sink.
-pub fn write_ubuntu_pkg_file<W: Write>(
+/// extract the file.
+pub fn write_ubuntu_pkg_file<P: AsRef<Path>>(
     deb_file_name: &str,
     file_name: &str,
-    write: &mut W,
+    out_path: P,
 ) -> Result<()> {
+    let out_path = out_path.as_ref();
+
     let deb_bytes = request_ubuntu_pkg(deb_file_name)?;
     let mut deb = ar::Archive::new(deb_bytes);
 
@@ -110,11 +116,11 @@ pub fn write_ubuntu_pkg_file<W: Write>(
         match ext {
             b"gz" => {
                 let data = GzDecoder::new(entry);
-                write_ubuntu_data_tar_file(data, file_name, write)
+                write_ubuntu_data_tar_file(data, file_name, out_path)
             }
             b"xz" => {
                 let data = LzmaReader::new_decompressor(entry).context(DataUnzipError)?;
-                write_ubuntu_data_tar_file(data, file_name, write)
+                write_ubuntu_data_tar_file(data, file_name, out_path)
             }
             ext => None.context(DataExtError { ext }),
         }?;
@@ -126,11 +132,11 @@ pub fn write_ubuntu_pkg_file<W: Write>(
 }
 
 /// Given the bytes of a data.tar in a glibc deb package, find a file inside it,
-/// and write the file to a specified sink.
-fn write_ubuntu_data_tar_file<R: Read, W: Write>(
+/// and extract the file.
+fn write_ubuntu_data_tar_file<R: Read>(
     data_tar_bytes: R,
     file_name: &str,
-    write: &mut W,
+    out_path: &Path,
 ) -> Result<()> {
     let mut data_tar = tar::Archive::new(data_tar_bytes);
     let mut entry = data_tar
@@ -139,6 +145,7 @@ fn write_ubuntu_data_tar_file<R: Read, W: Write>(
         .find(|entry| tar_entry_matches(entry, file_name))
         .context(FileNotFoundError)?
         .context(ReadError)?;
-    copy(&mut entry, write).context(WriteError)?;
+    let mut out_file = File::create(out_path).context(CreateError)?;
+    copy(&mut entry, &mut out_file).context(WriteError)?;
     Ok(())
 }

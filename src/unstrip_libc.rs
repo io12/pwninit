@@ -28,9 +28,6 @@ pub enum Error {
     #[snafu(display("failed creating temporary directory"))]
     TmpDirError { source: std::io::Error },
 
-    #[snafu(display("failed to create symbol file: {}", source))]
-    CreateError { source: io::Error },
-
     #[snafu(display("failed running eu-unstrip, please install elfutils: {}", source))]
     CmdRunError { source: std::io::Error },
 
@@ -59,11 +56,10 @@ fn do_unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result {
     let tmp_dir = TempDir::new(tmp_dir_name).context(TmpDirError)?;
 
     let sym_path = tmp_dir.path().join("libc-syms");
-    let mut sym_file = File::create(&sym_path).context(CreateError)?;
 
     let name = format!("libc-{}.so", ver.string_short);
 
-    libc_deb::write_ubuntu_pkg_file(&deb_file_name, &name, &mut sym_file).context(DebError)?;
+    libc_deb::write_ubuntu_pkg_file(&deb_file_name, &name, &sym_path).context(DebError)?;
 
     let out = Command::new("eu-unstrip")
         .arg(libc)
