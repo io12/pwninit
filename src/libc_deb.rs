@@ -1,24 +1,14 @@
-use crate::warn::Warn;
-
 use std::io::copy;
 use std::io::Read;
 use std::io::Write;
 
-use colored::Colorize;
 use lzma::LzmaReader;
 use snafu::OptionExt;
 use snafu::ResultExt;
 use snafu::Snafu;
 
-/// URL for new Ubuntu glibc packages. This is one of the few Ubuntu mirrors
-/// that uses HTTPS.
-pub static PKG_URL_NEW: &str = "https://mirrors.edge.kernel.org/ubuntu/pool/main/g/glibc";
-
-/// URL for old Ubuntu glibc packages. Note that "old package" doesn't
-/// necessarily correspond to "old glibc version." This is one of the few Ubuntu
-/// archive mirrors that uses HTTPS.
-pub static PKG_URL_OLD: &str =
-    "https://mirror.math.princeton.edu/pub/ubuntu-archive/ubuntu/pool/main/g/glibc";
+/// URL for Ubuntu glibc packages
+pub static PKG_URL: &str = "https://launchpad.net/ubuntu/+archive/primary/+files/";
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -78,18 +68,8 @@ fn request_url(url: &str) -> Result<reqwest::Response> {
 /// Try to get a glibc deb package with a given filename, checking both current
 /// and archive Ubuntu mirrors
 fn request_ubuntu_pkg(deb_file_name: &str) -> Result<reqwest::Response> {
-    let url_new = format!("{}/{}", PKG_URL_NEW, deb_file_name);
-    let url_old = format!("{}/{}", PKG_URL_OLD, deb_file_name);
-
-    match request_url(&url_new) {
-        Ok(resp) => return Ok(resp),
-        Err(err) => {
-            err.warn("failed fetching Ubuntu glibc deb package");
-            println!("{}", "trying archive mirror".bright_blue().bold());
-        }
-    };
-
-    request_url(&url_old)
+    let url = format!("{}/{}", PKG_URL, deb_file_name);
+    request_url(&url)
 }
 
 /// Download the glibc deb package with a given name, find a file inside it, and
