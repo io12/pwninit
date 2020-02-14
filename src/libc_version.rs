@@ -70,9 +70,18 @@ impl LibcVersion {
 
     /// Extract the long version string from the bytes of a libc
     fn version_string_from_bytes(libc: &[u8]) -> Result<String> {
-        let split = b"GNU C Library (Ubuntu GLIBC ";
-        let pos = find_bytes(&libc, split).context(NotFoundError)?;
-        let ver_str = &libc[pos + split.len()..];
+        let split: [&[u8]; 2] = [
+            b"GNU C Library (Ubuntu GLIBC ",
+            b"GNU C Library (Ubuntu EGLIBC ",
+        ];
+        let pos = split
+            .iter()
+            .find_map(|cut| {
+                let pos = find_bytes(&libc, cut);
+                Some(pos? + cut.len())
+            })
+            .context(NotFoundError)?;
+        let ver_str = &libc[pos..];
         let pos = ver_str
             .iter()
             .position(|&c| c == b')')
