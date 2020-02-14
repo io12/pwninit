@@ -84,7 +84,7 @@ fn request_ubuntu_pkg(deb_file_name: &str) -> Result<reqwest::Response> {
     match request_url(&url_new) {
         Ok(resp) => return Ok(resp),
         Err(err) => {
-            err.warn();
+            err.warn("failed fetching Ubuntu glibc deb package");
             println!("{}", "trying archive mirror".bright_blue().bold());
         }
     };

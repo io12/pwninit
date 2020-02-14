@@ -70,12 +70,12 @@ fn visit_libc(opts: &Opts, libc: &Path) {
     let ver = match LibcVersion::detect(libc) {
         Ok(ver) => ver,
         Err(err) => {
-            err.warn();
+            err.warn("failed detecting libc version (is the libc an Ubuntu glibc?)");
             return;
         }
     };
-    maybe_fetch_ld(opts, &ver).warn();
-    unstrip_libc(libc, &ver).warn();
+    maybe_fetch_ld(opts, &ver).warn("failed fetching ld");
+    unstrip_libc(libc, &ver).warn("failed unstripping libc");
 }
 
 /// Same as `visit_libc()`, but doesn't do anything if no libc is found
@@ -99,7 +99,7 @@ pub fn set_bin_exec(opts: &Opts) -> io::Result<()> {
                 set_exec(&bin)?;
             }
         }
-        None => "binary not found".warn(),
+        None => "binary not found".warn("failed setting binary to be executable"),
     }
 
     Ok(())
