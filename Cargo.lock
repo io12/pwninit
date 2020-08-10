@@ -869,7 +869,7 @@ dependencies = [
  "maplit 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.9.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-lzma 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "strfmt 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "structopt 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "tar 0.4.26 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1271,16 +1271,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "snafu"
-version = "0.6.2"
+version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "doc-comment 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu-derive 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu-derive 0.6.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "snafu-derive"
-version = "0.6.2"
+version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 1.0.8 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1885,8 +1885,8 @@ dependencies = [
 "checksum slab 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 "checksum smallvec 0.6.13 (registry+https://github.com/rust-lang/crates.io-index)" = "f7b0758c52e15a8b5e3691eae6cc559f08eee9406e548a4477ba4e67770a82b6"
 "checksum smallvec 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "5c2fb2ec9bcd216a5b0d0ccf31ab17b5ed1d627960edff65bbe95d3ce221cefc"
-"checksum snafu 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "546db9181bce2aa22ed883c33d65603b76335b4c2533a98289f54265043de7a1"
-"checksum snafu-derive 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "bdc75da2e0323f297402fd9c8fdba709bb04e4c627cbe31d19a2c91fc8d9f0e2"
+"checksum snafu 0.6.8 (registry+https://github.com/rust-lang/crates.io-index)" = "c7f5aed652511f5c9123cf2afbe9c244c29db6effa2abb05c866e965c82405ce"
+"checksum snafu-derive 0.6.8 (registry+https://github.com/rust-lang/crates.io-index)" = "ebf8f7d5720104a9df0f7076a8682024e958bba0fe9848767bb44f251f3648e9"
 "checksum strfmt 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "b278b244ef7aa5852b277f52dd0c6cac3a109919e1f6d699adde63251227a30f"
 "checksum string 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "d24114bfcceb867ca7f71a0d3fe45d45619ec47a6fbfa98cb14e14250bfa5d6d"
 "checksum strsim 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
