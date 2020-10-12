@@ -15,7 +15,7 @@ lto = true
 
 [dependencies]
 twoway = "0.2.1"
-structopt = "0.3.3"
+structopt = "0.3.19"
 goblin = "0.0.24"
 reqwest = "0.9.22"
 ar = "0.8.0"
