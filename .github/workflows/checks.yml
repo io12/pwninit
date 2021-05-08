@@ -1,0 +1,37 @@
+name: checks
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: cargo test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull source
+        uses: actions/checkout@v2
+      - name: Run cargo test
+        run: cargo test
+        env:
+          # Deny compile warnings
+          RUSTFLAGS: -D warnings
+
+  fmt:
+    name: cargo fmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull source
+        uses: actions/checkout@v2
+      - name: Run cargo fmt
+        run: cargo fmt --all -- --check
+
+  clippy:
+    name: cargo clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull source
+        uses: actions/checkout@v2
+      - name: Run cargo clippy
+        run: cargo clippy
+        env:
+          # Deny warnings
+          RUSTFLAGS: -D warnings
