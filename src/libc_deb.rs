@@ -69,8 +69,8 @@ pub enum Error {
 }
 
 /// Try to download a file from a URL
-fn request_url(url: &str) -> Result<reqwest::Response> {
-    let resp = reqwest::get(url).context(DownloadError)?;
+fn request_url(url: &str) -> Result<reqwest::blocking::Response> {
+    let resp = reqwest::blocking::get(url).context(DownloadError)?;
     let status = resp.status();
     if status.is_success() {
         Ok(resp)
@@ -81,7 +81,7 @@ fn request_url(url: &str) -> Result<reqwest::Response> {
 
 /// Try to get a glibc deb package with a given filename, checking both current
 /// and archive Ubuntu mirrors
-fn request_ubuntu_pkg(deb_file_name: &str) -> Result<reqwest::Response> {
+fn request_ubuntu_pkg(deb_file_name: &str) -> Result<reqwest::blocking::Response> {
     let url = format!("{}/{}", PKG_URL, deb_file_name);
     request_url(&url)
 }

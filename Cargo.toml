@@ -17,7 +17,6 @@ lto = true
 twoway = "0.2.1"
 structopt = "0.3.3"
 goblin = "0.2.3"
-reqwest = "0.10.8"
 ar = "0.8.0"
 tar = "0.4.26"
 rust-lzma = "0.5.1"
@@ -31,3 +30,7 @@ derive_setters = "0.1.2"
 strfmt = "0.1.6"
 maplit = "1.0.2"
 flate2 = "1.0.19"
+
+[dependencies.reqwest]
+version = "0.10.8"
+features = ["blocking"]
