@@ -51,7 +51,7 @@ fn make_bindings(opts: &Opts) -> String {
     ]
     .iter()
     .filter_map(|x| x.as_ref())
-    .map(|s| s.clone())
+    .cloned()
     .collect::<Vec<String>>()
     .join("\n")
 }
