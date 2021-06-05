@@ -6,12 +6,12 @@ mod fetch_ld;
 mod libc_deb;
 mod libc_version;
 pub mod opts;
+mod patchelf;
 mod pwninit;
 mod set_exec;
 mod solvepy;
 mod unstrip_libc;
 mod warn;
-mod patchelf;
 
 pub use crate::pwninit::run;
 pub use crate::pwninit::Result;

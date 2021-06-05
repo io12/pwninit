@@ -1,6 +1,6 @@
 use crate::opts::Opts;
 use std::fs;
-use std::io::{self, Write, Error, ErrorKind};
+use std::io::{self, Error, ErrorKind, Write};
 use std::process::Command;
 
 pub fn patch_rpath(opts: &Opts) -> io::Result<()> {
