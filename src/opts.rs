@@ -70,6 +70,14 @@ pub struct Opts {
     #[structopt(long)]
     #[structopt(default_value = "ld")]
     pub template_ld_name: String,
+
+    /// Patch
+    #[structopt(long)]
+    pub patchelf: bool,
+
+    /// No Template
+    #[structopt(long)]
+    pub no_template: bool,
 }
 
 impl Opts {

@@ -11,6 +11,7 @@ mod set_exec;
 mod solvepy;
 mod unstrip_libc;
 mod warn;
+mod patchelf;
 
 pub use crate::pwninit::run;
 pub use crate::pwninit::Result;
