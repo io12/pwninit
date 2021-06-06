@@ -9,9 +9,13 @@ context.binary = {bin_name}
 
 def conn():
     if args.LOCAL:
-        return process({proc_args})
+        r = process({proc_args})
+        if args.DEBUG:
+            gdb.attach(r)
     else:
-        return remote("addr", 1337)
+        r = remote("addr", 1337)
+
+    return r
 
 
 def main():
