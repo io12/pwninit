@@ -1,8 +1,8 @@
 use crate::opts::Opts;
+use crate::patch_bin;
 use crate::set_exec;
 
 use std::path::Path;
-use std::path::PathBuf;
 use std::string;
 
 use colored::Colorize;
@@ -37,17 +37,22 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// variables
 fn make_bindings(opts: &Opts) -> String {
     // Helper to make one binding line
-    let bind_line = |name: &str, opt_path: &Option<PathBuf>| -> Option<String> {
+    fn bind_line<P: AsRef<Path>>(name: &str, opt_path: Option<P>) -> Option<String> {
         opt_path
             .as_ref()
-            .map(|path| format!("{} = ELF(\"{}\")", name, path.display(),))
-    };
+            .map(|path| format!("{} = ELF(\"{}\")", name, path.as_ref().display(),))
+    }
 
     // Create bindings and join them with newlines
     [
-        bind_line(&opts.template_bin_name, &opts.bin),
-        bind_line(&opts.template_libc_name, &opts.libc),
-        bind_line(&opts.template_ld_name, &opts.ld),
+        bind_line(
+            &opts.template_bin_name,
+            patch_bin::bin_patched_path(opts)
+                .as_ref()
+                .or_else(|| opts.bin.as_ref()),
+        ),
+        bind_line(&opts.template_libc_name, opts.libc.as_ref()),
+        bind_line(&opts.template_ld_name, opts.ld.as_ref()),
     ]
     .iter()
     .filter_map(|x| x.as_ref())
@@ -58,22 +63,7 @@ fn make_bindings(opts: &Opts) -> String {
 
 /// Make arguments to pwntools `process()` function
 fn make_proc_args(opts: &Opts) -> String {
-    let args = if opts.ld.is_some() {
-        format!(
-            "{}.path, {}.path",
-            opts.template_ld_name, opts.template_bin_name
-        )
-    } else {
-        format!("{}.path", opts.template_bin_name)
-    };
-
-    let env = if opts.libc.is_some() {
-        format!(", env={{\"LD_PRELOAD\": {}.path}}", opts.template_libc_name)
-    } else {
-        "".to_string()
-    };
-
-    format!("[{}]{}", args, env)
+    format!("[{}.path]", opts.template_bin_name)
 }
 
 /// Fill in template pwntools solve script with (binary, libc, linker) paths

@@ -1,5 +1,6 @@
 use crate::maybe_visit_libc;
 use crate::opts;
+use crate::patch_bin;
 use crate::set_bin_exec;
 use crate::set_ld_exec;
 use crate::solvepy;
@@ -20,6 +21,9 @@ pub enum Error {
 
     #[snafu(display("failed setting linker executable: {}", source))]
     SetLdExecError { source: io::Error },
+
+    #[snafu(display("failed patching binary: {}", source))]
+    PatchBinError { source: patch_bin::Error },
 
     #[snafu(display("failed making template solve script: {}", source))]
     SolvepyError { source: solvepy::Error },
@@ -43,7 +47,14 @@ pub fn run(opts: Opts) -> Result {
     let opts = opts.find_if_unspec().context(FindError)?;
 
     set_ld_exec(&opts).context(SetLdExecError)?;
-    solvepy::write_stub(&opts).context(SolvepyError)?;
+
+    if !opts.no_patch_bin {
+        patch_bin::patch_bin(&opts).context(PatchBinError)?;
+    }
+
+    if !opts.no_template {
+        solvepy::write_stub(&opts).context(SolvepyError)?;
+    }
 
     Ok(())
 }

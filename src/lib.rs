@@ -6,6 +6,7 @@ mod fetch_ld;
 mod libc_deb;
 mod libc_version;
 pub mod opts;
+mod patch_bin;
 mod pwninit;
 mod set_exec;
 mod solvepy;
@@ -92,9 +93,7 @@ pub fn set_bin_exec(opts: &Opts) -> io::Result<()> {
             if !bin.is_executable() {
                 println!(
                     "{}",
-                    format!("setting {} executable", bin.display())
-                        .bright_blue()
-                        .bold()
+                    format!("setting {} executable", bin.to_string_lossy().bold()).bright_blue()
                 );
                 set_exec(&bin)?;
             }
@@ -111,9 +110,7 @@ pub fn set_ld_exec(opts: &Opts) -> io::Result<()> {
         Some(ld) if !ld.is_executable() => {
             println!(
                 "{}",
-                format!("setting {} executable", ld.display())
-                    .green()
-                    .bold()
+                format!("setting {} executable", ld.to_string_lossy().bold()).green()
             );
             set_exec(&ld)
         }
