@@ -12,7 +12,8 @@ A tool for automating starting binary exploit challenges
 - Set challenge binary to be executable
 - Download a linker (`ld-linux.so.*`) that can segfaultlessly load the provided libc
 - Download debug symbols and unstrip the libc
-- Patch the binary with `patchelf` to use the correct RPATH and interpreter
+- Patch the binary with [`patchelf`](https://github.com/NixOS/patchelf) to use
+  the correct RPATH and interpreter for the provided libc
 - Fill in a template pwntools solve script
 
 ## Usage
