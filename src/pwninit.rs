@@ -1,17 +1,14 @@
 use crate::maybe_visit_libc;
 use crate::opts;
-use crate::patchelf;
+use crate::patch_bin;
 use crate::set_bin_exec;
 use crate::set_ld_exec;
 use crate::solvepy;
 use crate::Opts;
-use colored::Colorize;
 
 use ex::io;
 use snafu::ResultExt;
 use snafu::Snafu;
-use std::fs;
-use std::path::Path;
 
 /// Top-level `pwninit` error
 #[derive(Debug, Snafu)]
@@ -25,8 +22,8 @@ pub enum Error {
     #[snafu(display("failed setting linker executable: {}", source))]
     SetLdExecError { source: io::Error },
 
-    #[snafu(display("failed patching elf: {}", source))]
-    PatchELFError { source: std::io::Error },
+    #[snafu(display("failed patching binary: {}", source))]
+    PatchBinError { source: patch_bin::Error },
 
     #[snafu(display("failed making template solve script: {}", source))]
     SolvepyError { source: solvepy::Error },
@@ -51,42 +48,13 @@ pub fn run(opts: Opts) -> Result {
 
     set_ld_exec(&opts).context(SetLdExecError)?;
 
-    if opts.patchelf {
-        let path = opts
-            .clone()
-            .bin
-            .unwrap()
-            .into_os_string()
-            .into_string()
-            .unwrap();
-        let orig_path = Path::new(&path);
-        let backup_str = format!("{}_orig", path);
-        let backup_path = Path::new(&backup_str);
-        std::os::unix::fs::symlink(opts.clone().libc.unwrap(), "libc.so.6")
-            .context(PatchELFError)?;
-        fs::copy(orig_path, backup_path).context(PatchELFError)?;
-        println!(
-            "{}",
-            format!(
-                "copy from {} to {}",
-                orig_path.display(),
-                backup_path.display()
-            )
-            .green()
-            .bold()
-        );
-        println!(
-            "{}",
-            format!("running patchelf on {}", backup_path.display())
-                .green()
-                .bold()
-        );
-        patchelf::patch_rpath(&opts).context(PatchELFError)?;
-        patchelf::patch_interpreter(&opts).context(PatchELFError)?;
+    if !opts.no_patch_bin {
+        patch_bin::patch_bin(&opts).context(PatchBinError)?;
     }
 
     if !opts.no_template {
         solvepy::write_stub(&opts).context(SolvepyError)?;
     }
+
     Ok(())
 }

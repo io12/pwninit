@@ -10,8 +10,9 @@ A tool for automating starting binary exploit challenges
 ## Features
 
 - Set challenge binary to be executable
-- Download a linker (`ld-linux.so.*`) that can segfaultlessly `LD_PRELOAD` the provided libc
+- Download a linker (`ld-linux.so.*`) that can segfaultlessly load the provided libc
 - Download debug symbols and unstrip the libc
+- Patch the binary with `patchelf` to use the correct RPATH and interpreter
 - Fill in a template pwntools solve script
 
 ## Usage
@@ -70,13 +71,16 @@ $ pwninit
 bin: ./hunter
 libc: ./libc.so.6
 
+setting ./hunter executable
 fetching linker
 unstripping libc
 setting ./ld-2.23.so executable
+copying ./hunter to ./hunter_patched
+running patchelf on ./hunter_patched
 writing solve.py stub
 
 $ ls
-hunter  ld-2.23.so  libc.so.6  readme  solve.py
+hunter	hunter_patched	ld-2.23.so  libc.so.6  readme  solve.py
 ```
 
 `solve.py`:
@@ -86,7 +90,7 @@ hunter  ld-2.23.so  libc.so.6  readme  solve.py
 
 from pwn import *
 
-exe = ELF("./hunter")
+exe = ELF("./hunter_patched")
 libc = ELF("./libc.so.6")
 ld = ELF("./ld-2.23.so")
 
@@ -95,7 +99,7 @@ context.binary = exe
 
 def conn():
     if args.LOCAL:
-        return process([ld.path, exe.path], env={"LD_PRELOAD": libc.path})
+        return process([exe.path])
     else:
         return remote("addr", 1337)
 

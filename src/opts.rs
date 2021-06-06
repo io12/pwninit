@@ -71,11 +71,11 @@ pub struct Opts {
     #[structopt(default_value = "ld")]
     pub template_ld_name: String,
 
-    /// Patch
+    /// Disable running patchelf on binary
     #[structopt(long)]
-    pub patchelf: bool,
+    pub no_patch_bin: bool,
 
-    /// No Template
+    /// Disable generating template solve script
     #[structopt(long)]
     pub no_template: bool,
 }
