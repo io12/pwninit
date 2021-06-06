@@ -743,7 +743,7 @@ dependencies = [
 
 [[package]]
 name = "pwninit"
-version = "2.2.0"
+version = "3.0.0"
 dependencies = [
  "ar",
  "colored",
