@@ -51,7 +51,12 @@ fn run_patchelf(bin: &Path, opts: &Opts) -> Result<()> {
 
     let mut cmd = Command::new("patchelf");
     cmd.arg(bin);
-    if let Some(lib_dir) = opts.libc.as_ref().and_then(|libc| libc.parent()) {
+    if let Some(lib_dir) = opts
+        .libc
+        .as_ref()
+        // Prepend "." in case `libc`'s `parent()` is an empty path.
+        .and_then(|libc| Path::new(".").join(libc).parent().map(Path::to_path_buf))
+    {
         cmd.arg("--set-rpath").arg(lib_dir);
     };
     if let Some(ld) = &opts.ld {
