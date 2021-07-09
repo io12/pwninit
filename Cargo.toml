@@ -16,7 +16,7 @@ lto = true
 [dependencies]
 twoway = "0.2.1"
 structopt = "0.3.22"
-goblin = "0.4.0"
+goblin = "0.4.2"
 ar = "0.8.0"
 tar = "0.4.33"
 rust-lzma = "0.5.1"
