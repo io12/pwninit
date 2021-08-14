@@ -30,6 +30,7 @@ fn tar_entry_matches<R: Read>(entry: &std::io::Result<tar::Entry<R>>, file_name:
 }
 
 #[derive(Debug, Snafu)]
+#[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[snafu(display("failed to download package from Ubuntu mirror: {}", source))]
     DownloadError { source: reqwest::Error },

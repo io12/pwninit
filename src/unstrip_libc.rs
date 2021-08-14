@@ -18,6 +18,7 @@ use snafu::Snafu;
 use tempdir::TempDir;
 
 #[derive(Debug, Snafu)]
+#[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[snafu(display("libc ELF parse error: {}", source))]
     ElfParseError { source: elf::parse::Error },
