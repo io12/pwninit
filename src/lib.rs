@@ -1,4 +1,4 @@
-//! Utility functions that provide the bulk of ~pwninit~ functionality
+//! Utility functions that provide the bulk of `pwninit` functionality
 
 mod cpu_arch;
 mod elf;
