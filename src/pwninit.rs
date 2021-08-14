@@ -12,6 +12,7 @@ use snafu::Snafu;
 
 /// Top-level `pwninit` error
 #[derive(Debug, Snafu)]
+#[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[snafu(display("failed setting binary executable: {}", source))]
     SetBinExecError { source: io::Error },

@@ -38,6 +38,7 @@ impl fmt::Display for LibcVersion {
 }
 
 #[derive(Debug, Snafu)]
+#[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[snafu(display("failed reading file: {}", source))]
     ReadError { source: io::Error },
@@ -77,7 +78,7 @@ impl LibcVersion {
         let pos = split
             .iter()
             .find_map(|cut| {
-                let pos = find_bytes(&libc, cut);
+                let pos = find_bytes(libc, cut);
                 Some(pos? + cut.len())
             })
             .context(NotFoundError)?;

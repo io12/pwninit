@@ -14,6 +14,7 @@ use snafu::Snafu;
 use strfmt::strfmt;
 
 #[derive(Debug, Snafu)]
+#[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[snafu(display("solve script template is not valid UTF-8: {}", source))]
     Utf8Error { source: string::FromUtf8Error },

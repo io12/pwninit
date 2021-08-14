@@ -14,6 +14,7 @@ use snafu::ResultExt;
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
+#[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[snafu(display("patchelf failed with nonzero exit status"))]
     PatchelfError,
@@ -117,7 +118,7 @@ fn bin_patched_path_from_bin(bin: &Path) -> Result<PathBuf> {
 pub fn bin_patched_path(opts: &Opts) -> Option<PathBuf> {
     opts.bin
         .as_ref()
-        .and_then(|bin| bin_patched_path_from_bin(&bin).ok())
+        .and_then(|bin| bin_patched_path_from_bin(bin).ok())
 }
 
 /// Copy the file `bin` to a file with "_patched" appended to the file name.
@@ -146,12 +147,12 @@ fn copy_patched(bin: &Path) -> Result<PathBuf> {
 pub fn patch_bin(opts: &Opts) -> Result<()> {
     if let Some(bin) = &opts.bin {
         if let Some(libc) = &opts.libc {
-            symlink_libc(&libc)?;
+            symlink_libc(libc)?;
         }
 
-        let bin_patched = copy_patched(&bin)?;
+        let bin_patched = copy_patched(bin)?;
 
-        run_patchelf(&bin_patched, &opts)?;
+        run_patchelf(&bin_patched, opts)?;
     }
 
     Ok(())

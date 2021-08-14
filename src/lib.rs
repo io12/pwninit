@@ -82,7 +82,7 @@ fn visit_libc(opts: &Opts, libc: &Path) {
 /// Same as `visit_libc()`, but doesn't do anything if no libc is found
 pub fn maybe_visit_libc(opts: &Opts) {
     if let Some(libc) = &opts.libc {
-        visit_libc(opts, &libc)
+        visit_libc(opts, libc)
     }
 }
 
