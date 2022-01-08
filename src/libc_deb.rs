@@ -4,6 +4,7 @@ use std::io::Read;
 use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 
+use colored::Colorize;
 use ex::fs::File;
 use ex::io;
 use flate2::read::GzDecoder;
@@ -71,6 +72,7 @@ pub enum Error {
 
 /// Try to download a file from a URL
 fn request_url(url: &str) -> Result<reqwest::blocking::Response> {
+    println!("{}", url.green().bold());
     let resp = reqwest::blocking::get(url).context(DownloadError)?;
     let status = resp.status();
     if status.is_success() {
