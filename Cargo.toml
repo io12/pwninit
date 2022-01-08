@@ -14,11 +14,11 @@ opt-level = 'z'
 lto = true
 
 [dependencies]
-twoway = "0.2.1"
+twoway = "0.2.2"
 structopt = "0.3.25"
 goblin = "0.4.3"
 ar = "0.9.0"
-tar = "0.4.37"
+tar = "0.4.38"
 rust-lzma = "0.5.1"
 umask = "1.0.0"
 is_executable = "1.0.1"
@@ -32,5 +32,5 @@ maplit = "1.0.2"
 flate2 = "1.0.22"
 
 [dependencies.reqwest]
-version = "0.11.6"
+version = "0.11.8"
 features = ["blocking"]
