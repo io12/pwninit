@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    name: Build modified rust-musl-builder docker image and upload to GitHub Releases
+    name: Build and upload to GitHub Releases
     runs-on: ubuntu-latest
     steps:
       - name: Pull source
