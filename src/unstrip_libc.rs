@@ -15,7 +15,7 @@ use ex::fs::File;
 use ex::io;
 use snafu::ResultExt;
 use snafu::Snafu;
-use tempdir::TempDir;
+use tempfile::TempDir;
 
 #[derive(Debug, Snafu)]
 #[allow(clippy::enum_variant_names)]
@@ -53,8 +53,7 @@ fn do_unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result {
 
     let deb_file_name = format!("libc6-dbg_{}.deb", ver);
 
-    let tmp_dir_name = "pwninit-unstrip";
-    let tmp_dir = TempDir::new(tmp_dir_name).context(TmpDirSnafu)?;
+    let tmp_dir = TempDir::new().context(TmpDirSnafu)?;
 
     let sym_path = tmp_dir.path().join("libc-syms");
 
