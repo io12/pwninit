@@ -2,7 +2,7 @@
 name = "pwninit"
 version = "3.0.2"
 authors = ["Benjamin Levy <blevy@protonmail.com>"]
-edition = "2018"
+edition = "2021"
 description = "automate starting binary exploit challenges"
 repository = "https://github.com/io12/pwninit"
 readme = "README.md"
