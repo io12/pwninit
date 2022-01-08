@@ -49,16 +49,18 @@ Install [`pwninit`](https://aur.archlinux.org/packages/pwninit/) or
 
 ### Download
 
-You can download non-GMO statically-linked [musl](https://www.musl-libc.org/)
+You can download statically-linked [musl](https://www.musl-libc.org/)
 binaries from the [releases page](https://github.com/io12/pwninit/releases).
 
 ### Using cargo
+
+Run
 
 ```sh
 cargo install pwninit
 ```
 
-The binary will be placed in `~/.cargo/bin`.
+This places the binary in `~/.cargo/bin`.
 
 Note that `openssl`, `liblzma`, and `pkg-config` are required for the build.
 
@@ -74,7 +76,9 @@ libc: ./libc.so.6
 
 setting ./hunter executable
 fetching linker
+https://launchpad.net/ubuntu/+archive/primary/+files//libc6_2.23-0ubuntu10_i386.deb
 unstripping libc
+https://launchpad.net/ubuntu/+archive/primary/+files//libc6-dbg_2.23-0ubuntu10_i386.deb
 setting ./ld-2.23.so executable
 copying ./hunter to ./hunter_patched
 running patchelf on ./hunter_patched
@@ -100,9 +104,13 @@ context.binary = exe
 
 def conn():
     if args.LOCAL:
-        return process([exe.path])
+        r = process([exe.path])
+        if args.DEBUG:
+            gdb.attach(r)
     else:
-        return remote("addr", 1337)
+        r = remote("addr", 1337)
+
+    return r
 
 
 def main():
