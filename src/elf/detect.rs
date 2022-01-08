@@ -8,7 +8,7 @@ use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
 pub enum Error {
-    OpenError { source: io::Error },
+    Open { source: io::Error },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -16,7 +16,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// Is the binary at `path` an ELF?
 pub fn is_elf(path: &Path) -> Result<bool> {
     Ok(File::open(path)
-        .context(OpenError)?
+        .context(OpenSnafu)?
         .bytes()
         .take(4)
         .collect::<std::io::Result<Vec<u8>>>()

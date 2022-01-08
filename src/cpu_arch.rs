@@ -29,7 +29,7 @@ impl fmt::Display for CpuArch {
 
 #[derive(Debug, Snafu)]
 pub enum Error {
-    ElfParseError {
+    ElfParse {
         source: elf::parse::Error,
     },
 
@@ -44,7 +44,7 @@ pub type Result = std::result::Result<CpuArch, Error>;
 impl CpuArch {
     /// Detect `CpuArch` from the bytes of an ELF file
     pub fn from_elf_bytes(path: &Path, bytes: &[u8]) -> Result {
-        let elf = elf::parse::parse(path, bytes).context(ElfParseError)?;
+        let elf = elf::parse::parse(path, bytes).context(ElfParseSnafu)?;
         let arch = elf.header.e_machine;
         match arch {
             EM_386 => Ok(CpuArch::I386),

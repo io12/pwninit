@@ -20,13 +20,13 @@ use structopt::StructOpt;
 #[derive(Debug, Snafu)]
 pub enum Error {
     #[snafu(display("ELF detection error: {}", source))]
-    ElfDetectError { source: elf::detect::Error },
+    ElfDetect { source: elf::detect::Error },
 
     #[snafu(display("failed reading current directory entry: {}", source))]
-    DirEntError { source: io::Error },
+    DirEnt { source: io::Error },
 
     #[snafu(display("failed reading current directory: {}", source))]
-    ReadDirError { source: io::Error },
+    ReadDir { source: io::Error },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -100,15 +100,15 @@ impl Opts {
 
     /// For the unspecified files, try to guess their path
     pub fn find_if_unspec(self) -> Result<Self> {
-        let mut dir = fs::read_dir(".").context(ReadDirError)?;
+        let mut dir = fs::read_dir(".").context(ReadDirSnafu)?;
         let opts = dir.try_fold(self, Opts::merge_result_entry)?;
         Ok(opts)
     }
 
     /// Helper for `find_if_unspec()`, merging the `Opts` with a directory entry
     fn merge_result_entry(self, dir_ent: io::Result<fs::DirEntry>) -> Result<Self> {
-        self.merge_entry(dir_ent.context(DirEntError)?)
-            .context(ElfDetectError)
+        self.merge_entry(dir_ent.context(DirEntSnafu)?)
+            .context(ElfDetectSnafu)
     }
 
     /// Helper for `merge_result_entry()`, merging the `Opts` with a directory

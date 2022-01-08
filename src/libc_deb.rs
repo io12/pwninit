@@ -34,51 +34,51 @@ fn tar_entry_matches<R: Read>(entry: &std::io::Result<tar::Entry<R>>, file_name:
 #[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[snafu(display("failed to download package from Ubuntu mirror: {}", source))]
-    DownloadError { source: reqwest::Error },
+    Download { source: reqwest::Error },
 
     #[snafu(display(
         "failed to download package from Ubuntu mirror: status code: {}",
         status
     ))]
-    DownloadStatusError { status: reqwest::StatusCode },
+    DownloadStatus { status: reqwest::StatusCode },
 
     #[snafu(display("failed decompressing data.tar: {}", source))]
-    DataUnzipError { source: lzma::LzmaError },
+    DataUnzip { source: lzma::LzmaError },
 
     #[snafu(display("failed getting data.tar entries: {}", source))]
-    DataEntriesError { source: std::io::Error },
+    DataEntries { source: std::io::Error },
 
     #[snafu(display("failed to find file in data.tar"))]
-    FileNotFoundError,
+    FileNotFound,
 
     #[snafu(display("failed reading file entry in data.tar: {}", source))]
-    ReadError { source: std::io::Error },
+    Read { source: std::io::Error },
 
     #[snafu(display("failed to write file from deb: {}", source))]
-    WriteError { source: std::io::Error },
+    Write { source: std::io::Error },
 
     #[snafu(display("failed to create file: {}", source))]
-    CreateError { source: io::Error },
+    Create { source: io::Error },
 
     #[snafu(display("failed to find data.tar in package"))]
-    DataNotFoundError,
+    DataNotFound,
 
     #[snafu(display(
         "data.tar in package has unknown extension: {}",
         String::from_utf8_lossy(ext)
     ))]
-    DataExtError { ext: Vec<u8> },
+    DataExt { ext: Vec<u8> },
 }
 
 /// Try to download a file from a URL
 fn request_url(url: &str) -> Result<reqwest::blocking::Response> {
     println!("{}", url.green().bold());
-    let resp = reqwest::blocking::get(url).context(DownloadError)?;
+    let resp = reqwest::blocking::get(url).context(DownloadSnafu)?;
     let status = resp.status();
     if status.is_success() {
         Ok(resp)
     } else {
-        Err(Error::DownloadStatusError { status })
+        Err(Error::DownloadStatus { status })
     }
 }
 
@@ -115,23 +115,23 @@ pub fn write_ubuntu_pkg_file<P: AsRef<Path>>(
         let ext = path
             .extension()
             .map(OsStr::as_bytes)
-            .context(DataNotFoundError)?;
+            .context(DataNotFoundSnafu)?;
         match ext {
             b"gz" => {
                 let data = GzDecoder::new(entry);
                 write_ubuntu_data_tar_file(data, file_name, out_path)
             }
             b"xz" => {
-                let data = LzmaReader::new_decompressor(entry).context(DataUnzipError)?;
+                let data = LzmaReader::new_decompressor(entry).context(DataUnzipSnafu)?;
                 write_ubuntu_data_tar_file(data, file_name, out_path)
             }
-            ext => None.context(DataExtError { ext }),
+            ext => None.context(DataExtSnafu { ext }),
         }?;
 
         return Ok(());
     }
 
-    Err(Error::DataNotFoundError)
+    Err(Error::DataNotFound)
 }
 
 /// Given the bytes of a data.tar in a glibc deb package, find a file inside it,
@@ -144,11 +144,11 @@ fn write_ubuntu_data_tar_file<R: Read>(
     let mut data_tar = tar::Archive::new(data_tar_bytes);
     let mut entry = data_tar
         .entries()
-        .context(DataEntriesError)?
+        .context(DataEntriesSnafu)?
         .find(|entry| tar_entry_matches(entry, file_name))
-        .context(FileNotFoundError)?
-        .context(ReadError)?;
-    let mut out_file = File::create(out_path).context(CreateError)?;
-    copy(&mut entry, &mut out_file).context(WriteError)?;
+        .context(FileNotFoundSnafu)?
+        .context(ReadSnafu)?;
+    let mut out_file = File::create(out_path).context(CreateSnafu)?;
+    copy(&mut entry, &mut out_file).context(WriteSnafu)?;
     Ok(())
 }

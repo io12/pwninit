@@ -17,19 +17,19 @@ use snafu::Snafu;
 #[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[snafu(display("patchelf failed with nonzero exit status"))]
-    PatchelfError,
+    Patchelf,
 
     #[snafu(display("patchelf failed to start; please install patchelf: {}", source))]
-    PatchelfExecError { source: io::Error },
+    PatchelfExec { source: io::Error },
 
     #[snafu(display("failed copying file to patch: {}", source))]
-    CopyPatchedError { source: io::Error },
+    CopyPatched { source: io::Error },
 
     #[snafu(display("path has no file name: {}", path.display()))]
-    FileNameError { path: PathBuf },
+    FileName { path: PathBuf },
 
     #[snafu(display("failed symlinking {} -> {}: {}", link.display(), target.display(), source))]
-    SymlinkError {
+    Symlink {
         link: PathBuf,
         target: PathBuf,
         source: io::Error,
@@ -64,11 +64,11 @@ fn run_patchelf(bin: &Path, opts: &Opts) -> Result<()> {
         cmd.arg("--set-interpreter").arg(ld);
     };
 
-    let status = cmd.status().context(PatchelfExecError)?;
+    let status = cmd.status().context(PatchelfExecSnafu)?;
     if status.success() {
         Ok(())
     } else {
-        Err(Error::PatchelfError)
+        Err(Error::Patchelf)
     }
 }
 
@@ -78,7 +78,7 @@ fn run_patchelf(bin: &Path, opts: &Opts) -> Result<()> {
 /// make a symlink with file name `libc.so.6` in the same directory as `libc`,
 /// and make it point to `libc`.
 fn symlink_libc(libc: &Path) -> Result<()> {
-    let libc_file_name = libc.file_name().context(FileNameError { path: libc })?;
+    let libc_file_name = libc.file_name().context(FileNameSnafu { path: libc })?;
     if libc_file_name != LIBC_FILE_NAME {
         let link = libc.with_file_name(LIBC_FILE_NAME);
         println!(
@@ -90,7 +90,7 @@ fn symlink_libc(libc: &Path) -> Result<()> {
             )
             .green()
         );
-        std::os::unix::fs::symlink(libc_file_name, &link).context(SymlinkError {
+        std::os::unix::fs::symlink(libc_file_name, &link).context(SymlinkSnafu {
             link,
             target: libc_file_name,
         })?;
@@ -105,7 +105,7 @@ fn symlink_libc(libc: &Path) -> Result<()> {
 fn bin_patched_path_from_bin(bin: &Path) -> Result<PathBuf> {
     Ok(bin.with_file_name(
         [
-            bin.file_name().context(FileNameError { path: bin })?,
+            bin.file_name().context(FileNameSnafu { path: bin })?,
             OsStr::new("_patched"),
         ]
         .iter()
@@ -134,7 +134,7 @@ fn copy_patched(bin: &Path) -> Result<PathBuf> {
         )
         .green()
     );
-    fs::copy(bin, &bin_patched).context(CopyPatchedError)?;
+    fs::copy(bin, &bin_patched).context(CopyPatchedSnafu)?;
 
     Ok(bin_patched)
 }

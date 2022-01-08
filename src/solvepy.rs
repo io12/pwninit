@@ -17,19 +17,19 @@ use strfmt::strfmt;
 #[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[snafu(display("solve script template is not valid UTF-8: {}", source))]
-    Utf8Error { source: string::FromUtf8Error },
+    Utf8 { source: string::FromUtf8Error },
 
     #[snafu(display("error writing solve script template: {}", source))]
-    WriteError { source: io::Error },
+    Write { source: io::Error },
 
     #[snafu(display("error reading solve script template: {}", source))]
-    ReadError { source: io::Error },
+    Read { source: io::Error },
 
     #[snafu(display("error filling in solve script template: {}", source))]
-    FmtError { source: strfmt::FmtError },
+    Fmt { source: strfmt::FmtError },
 
     #[snafu(display("error setting solve script template executable: {}", source))]
-    SetExecError { source: io::Error },
+    SetExec { source: io::Error },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -71,8 +71,8 @@ fn make_proc_args(opts: &Opts) -> String {
 fn make_stub(opts: &Opts) -> Result<String> {
     let templ = match &opts.template_path {
         Some(path) => {
-            let data = fs::read(path).context(ReadError)?;
-            String::from_utf8(data).context(Utf8Error)?
+            let data = fs::read(path).context(ReadSnafu)?;
+            String::from_utf8(data).context(Utf8Snafu)?
         }
         None => include_str!("template.py").to_string(),
     };
@@ -84,7 +84,7 @@ fn make_stub(opts: &Opts) -> Result<String> {
         "bin_name".to_string() => opts.template_bin_name.clone(),
         },
     )
-    .context(FmtError)
+    .context(FmtSnafu)
 }
 
 /// Write script produced with `make_stub()` to `solve.py` in the
@@ -94,8 +94,8 @@ pub fn write_stub(opts: &Opts) -> Result<()> {
     let path = Path::new("solve.py");
     if !path.exists() {
         println!("{}", "writing solve.py stub".cyan().bold());
-        fs::write(&path, stub).context(WriteError)?;
-        set_exec(&path).context(SetExecError)?;
+        fs::write(&path, stub).context(WriteSnafu)?;
+        set_exec(&path).context(SetExecSnafu)?;
     }
     Ok(())
 }

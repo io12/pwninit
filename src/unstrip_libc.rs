@@ -21,28 +21,28 @@ use tempdir::TempDir;
 #[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[snafu(display("libc ELF parse error: {}", source))]
-    ElfParseError { source: elf::parse::Error },
+    ElfParse { source: elf::parse::Error },
 
     #[snafu(display("libc deb error: {}", source))]
-    DebError { source: libc_deb::Error },
+    Deb { source: libc_deb::Error },
 
     #[snafu(display("failed creating temporary directory"))]
-    TmpDirError { source: std::io::Error },
+    TmpDir { source: std::io::Error },
 
     #[snafu(display("failed running eu-unstrip, please install elfutils: {}", source))]
-    CmdRunError { source: std::io::Error },
+    CmdRun { source: std::io::Error },
 
     #[snafu(display("eu-unstrip exited with failure: {}", status))]
-    CmdFailError { status: ExitStatus },
+    CmdFail { status: ExitStatus },
 
     #[snafu(display("failed to open symbol file: {}", source))]
-    SymOpenError { source: io::Error },
+    SymOpen { source: io::Error },
 
     #[snafu(display("failed to open libc file: {}", source))]
-    LibcOpenError { source: io::Error },
+    LibcOpen { source: io::Error },
 
     #[snafu(display("failed writing symbols to libc file: {}", source))]
-    LibcWriteError { source: std::io::Error },
+    LibcWrite { source: std::io::Error },
 }
 
 pub type Result = std::result::Result<(), Error>;
@@ -54,28 +54,28 @@ fn do_unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result {
     let deb_file_name = format!("libc6-dbg_{}.deb", ver);
 
     let tmp_dir_name = "pwninit-unstrip";
-    let tmp_dir = TempDir::new(tmp_dir_name).context(TmpDirError)?;
+    let tmp_dir = TempDir::new(tmp_dir_name).context(TmpDirSnafu)?;
 
     let sym_path = tmp_dir.path().join("libc-syms");
 
     let name = format!("libc-{}.so", ver.string_short);
 
-    libc_deb::write_ubuntu_pkg_file(&deb_file_name, &name, &sym_path).context(DebError)?;
+    libc_deb::write_ubuntu_pkg_file(&deb_file_name, &name, &sym_path).context(DebSnafu)?;
 
     let out = Command::new("eu-unstrip")
         .arg(libc)
         .arg(&sym_path)
         .output()
-        .context(CmdRunError)?;
+        .context(CmdRunSnafu)?;
     let _ = stderr().write_all(&out.stderr);
     let _ = stdout().write_all(&out.stdout);
     if !out.status.success() {
-        return Err(Error::CmdFailError { status: out.status });
+        return Err(Error::CmdFail { status: out.status });
     }
 
-    let mut sym_file = File::open(sym_path).context(SymOpenError)?;
-    let mut libc_file = File::create(libc).context(LibcOpenError)?;
-    copy(&mut sym_file, &mut libc_file).context(LibcWriteError)?;
+    let mut sym_file = File::open(sym_path).context(SymOpenSnafu)?;
+    let mut libc_file = File::create(libc).context(LibcOpenSnafu)?;
+    copy(&mut sym_file, &mut libc_file).context(LibcWriteSnafu)?;
 
     Ok(())
 }
@@ -83,7 +83,7 @@ fn do_unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result {
 /// Download debug symbols and apply them to a libc if it doesn't have them
 /// already
 pub fn unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result {
-    if !elf::has_debug_syms(libc).context(ElfParseError)? {
+    if !elf::has_debug_syms(libc).context(ElfParseSnafu)? {
         do_unstrip_libc(libc, ver)?;
     }
     Ok(())

@@ -58,14 +58,14 @@ pub type Result<T> = std::result::Result<T, Error>;
 impl LibcVersion {
     /// Detect the version of a libc
     pub fn detect(libc: &Path) -> Result<Self> {
-        let bytes = fs::read(libc).context(ReadError)?;
+        let bytes = fs::read(libc).context(ReadSnafu)?;
         let string = Self::version_string_from_bytes(&bytes)?;
-        let string_short = string.split('-').next().context(NotFoundError)?.to_string();
+        let string_short = string.split('-').next().context(NotFoundSnafu)?.to_string();
 
         Ok(Self {
             string,
             string_short,
-            arch: CpuArch::from_elf_bytes(libc, &bytes).context(ArchError)?,
+            arch: CpuArch::from_elf_bytes(libc, &bytes).context(ArchSnafu)?,
         })
     }
 
@@ -81,14 +81,14 @@ impl LibcVersion {
                 let pos = find_bytes(libc, cut);
                 Some(pos? + cut.len())
             })
-            .context(NotFoundError)?;
+            .context(NotFoundSnafu)?;
         let ver_str = &libc[pos..];
         let pos = ver_str
             .iter()
             .position(|&c| c == b')')
-            .context(NotFoundError)?;
+            .context(NotFoundSnafu)?;
         let ver_str = &ver_str[..pos];
-        let ver_str = std::str::from_utf8(ver_str).context(Utf8Error)?.to_string();
+        let ver_str = std::str::from_utf8(ver_str).context(Utf8Snafu)?.to_string();
         Ok(ver_str)
     }
 }

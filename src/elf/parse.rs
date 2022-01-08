@@ -9,10 +9,10 @@ use snafu::Snafu;
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub))]
 pub enum Error {
-    ReadError {
+    Read {
         source: io::Error,
     },
-    GoblinError {
+    Goblin {
         path: PathBuf,
         source: goblin::error::Error,
     },
@@ -21,5 +21,5 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 pub fn parse<'a>(path: &Path, bytes: &'a [u8]) -> Result<Elf<'a>> {
-    Elf::parse(bytes).context(GoblinError { path })
+    Elf::parse(bytes).context(GoblinSnafu { path })
 }
