@@ -4,6 +4,7 @@ use std::io::Read;
 use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 
+use colored::Colorize;
 use ex::fs::File;
 use ex::io;
 use flate2::read::GzDecoder;
@@ -84,6 +85,7 @@ fn request_url(url: &str) -> Result<reqwest::blocking::Response> {
 /// and archive Ubuntu mirrors
 fn request_ubuntu_pkg(deb_file_name: &str) -> Result<reqwest::blocking::Response> {
     let url = format!("{}/{}", PKG_URL, deb_file_name);
+    println!("{}", url.green().bold());
     request_url(&url)
 }
 
