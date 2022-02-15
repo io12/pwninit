@@ -42,8 +42,11 @@ pub enum Error {
     ))]
     DownloadStatus { status: reqwest::StatusCode },
 
-    #[snafu(display("failed decompressing data.tar: {}", source))]
-    DataUnzip { source: lzma::LzmaError },
+    #[snafu(display("failed decompressing data.tar.xz: {}", source))]
+    DataUnzipLzma { source: lzma::LzmaError },
+
+    #[snafu(display("failed decompressing data.tar.zst: {}", source))]
+    DataUnzipZstd { source: std::io::Error },
 
     #[snafu(display("failed getting data.tar entries: {}", source))]
     DataEntries { source: std::io::Error },
@@ -122,7 +125,11 @@ pub fn write_ubuntu_pkg_file<P: AsRef<Path>>(
                 write_ubuntu_data_tar_file(data, file_name, out_path)
             }
             b"xz" => {
-                let data = LzmaReader::new_decompressor(entry).context(DataUnzipSnafu)?;
+                let data = LzmaReader::new_decompressor(entry).context(DataUnzipLzmaSnafu)?;
+                write_ubuntu_data_tar_file(data, file_name, out_path)
+            }
+            b"zst" => {
+                let data = zstd::stream::read::Decoder::new(entry).context(DataUnzipZstdSnafu)?;
                 write_ubuntu_data_tar_file(data, file_name, out_path)
             }
             ext => None.context(DataExtSnafu { ext }),
