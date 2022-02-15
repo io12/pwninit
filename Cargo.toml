@@ -15,14 +15,14 @@ lto = true
 
 [dependencies]
 twoway = "0.2.2"
-structopt = "0.3.25"
-goblin = "0.4.3"
+structopt = "0.3.26"
+goblin = "0.5.1"
 ar = "0.9.0"
 tar = "0.4.38"
 rust-lzma = "0.5.1"
-umask = "1.0.0"
+umask = "1.0.1"
 is_executable = "1.0.1"
-tempfile = "3.2.0"
+tempfile = "3.3.0"
 colored = "2.0.0"
 snafu = "0.7.0"
 ex = "0.1.3"
@@ -33,5 +33,5 @@ flate2 = "1.0.22"
 zstd = "0.10.0"
 
 [dependencies.reqwest]
-version = "0.11.8"
+version = "0.11.9"
 features = ["blocking"]
