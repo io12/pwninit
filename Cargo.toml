@@ -30,6 +30,7 @@ derive_setters = "0.1.5"
 strfmt = "0.1.6"
 maplit = "1.0.2"
 flate2 = "1.0.22"
+zstd = "0.10.0"
 
 [dependencies.reqwest]
 version = "0.11.8"
