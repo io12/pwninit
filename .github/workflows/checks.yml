@@ -35,3 +35,13 @@ jobs:
         env:
           # Deny warnings
           RUSTFLAGS: -D warnings
+
+  static-musl-build:
+    name: Build statically-linked musl binary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull source
+        uses: actions/checkout@v2
+      - name: Set permissions
+        run: chmod --recursive 777 .
+      - run: docker run --mount type=bind,source="$(pwd)",target=/home/rust/src io12/rust-musl-builder-lzma cargo build --release
