@@ -1,6 +1,6 @@
+use crate::cpu_arch::CpuArch;
 use crate::libc_deb;
 use crate::libc_version::LibcVersion;
-use crate::cpu_arch::CpuArch;
 
 use colored::Colorize;
 use snafu::ResultExt;
@@ -30,8 +30,9 @@ pub fn fetch_ld(ver: &LibcVersion) -> Result {
     } else {
         match ver.arch {
             CpuArch::I386 => "ld-linux.so.2",
-            CpuArch::Amd64 => "ld-linux-x86-64.so.2"
-        }.to_string()
+            CpuArch::Amd64 => "ld-linux-x86-64.so.2",
+        }
+        .to_string()
     };
     let out_name = format!("ld-{}.so", ver.string_short);
 
