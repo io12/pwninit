@@ -95,23 +95,21 @@ hunter	hunter_patched	ld-2.23.so  libc.so.6  readme  solve.py
 
 from pwn import *
 
+context.terminal = ['gnome-terminal', '--']
+context.binary = binary = "./hunter_patched"
+context.update(arch='x86_64')
+
 exe = ELF("./hunter_patched")
 libc = ELF("./libc.so.6")
 ld = ELF("./ld-2.23.so")
 
-context.binary = exe
-
-
 def conn():
-    if args.LOCAL:
-        r = process([exe.path])
-        if args.DEBUG:
-            gdb.attach(r)
-    else:
+    if args.REMOTE:
         r = remote("addr", 1337)
-
+    else:
+        r = process(binary)
+        gdb.attach(r)
     return r
-
 
 def main():
     r = conn()
@@ -123,4 +121,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 ```
