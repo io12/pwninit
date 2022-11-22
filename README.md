@@ -105,7 +105,7 @@ ld = ELF("./ld-2.23.so")
 
 def conn():
     if args.REMOTE:
-        r = remote("addr", 1234)
+        r = remote("addr", 1337)
     else:
         r = process(binary)
         gdb.attach(r)
