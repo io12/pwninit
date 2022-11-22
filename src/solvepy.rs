@@ -62,6 +62,28 @@ fn make_bindings(opts: &Opts) -> String {
     .join("\n")
 }
 
+fn make_bin_patched_path(opts: &Opts) -> String {
+    // Helper to make one binding line
+     fn bind<P: AsRef<Path>>(opt_path: Option<P>) -> Option<String> {
+        opt_path
+            .as_ref()
+            .map(|path| format!("\"{}\"", path.as_ref().display(),))
+    }
+    [
+        bind(
+                patch_bin::bin_patched_path(opts)
+                    .as_ref()
+                    .or_else(|| opts.bin.as_ref()),
+            )
+    ]
+    .iter()
+    .filter_map(|x| x.as_ref())
+    .cloned()
+    .collect::<Vec<String>>()
+    .join("\n")
+}
+
+
 /// Make arguments to pwntools `process()` function
 fn make_proc_args(opts: &Opts) -> String {
     format!("[{}.path]", opts.template_bin_name)
@@ -69,6 +91,7 @@ fn make_proc_args(opts: &Opts) -> String {
 
 /// Fill in template pwntools solve script with (binary, libc, linker) paths
 fn make_stub(opts: &Opts) -> Result<String> {
+
     let templ = match &opts.template_path {
         Some(path) => {
             let data = fs::read(path).context(ReadSnafu)?;
@@ -82,6 +105,7 @@ fn make_stub(opts: &Opts) -> Result<String> {
         "bindings".to_string() => make_bindings(opts),
         "proc_args".to_string() => make_proc_args(opts),
         "bin_name".to_string() => opts.template_bin_name.clone(),
+        "bin_path".to_string() => make_bin_patched_path(opts),
         },
     )
     .context(FmtSnafu)
