@@ -50,7 +50,7 @@ fn make_bindings(opts: &Opts) -> String {
             &opts.template_bin_name,
             patch_bin::bin_patched_path(opts)
                 .as_ref()
-                .or_else(|| opts.bin.as_ref()),
+                .or(opts.bin.as_ref()),
         ),
         bind_line(&opts.template_libc_name, opts.libc.as_ref()),
         bind_line(&opts.template_ld_name, opts.ld.as_ref()),
