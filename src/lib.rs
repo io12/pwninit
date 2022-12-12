@@ -95,7 +95,7 @@ pub fn set_bin_exec(opts: &Opts) -> io::Result<()> {
                     "{}",
                     format!("setting {} executable", bin.to_string_lossy().bold()).bright_blue()
                 );
-                set_exec(&bin)?;
+                set_exec(bin)?;
             }
         }
         None => "binary not found".warn("failed setting binary to be executable"),
@@ -112,7 +112,7 @@ pub fn set_ld_exec(opts: &Opts) -> io::Result<()> {
                 "{}",
                 format!("setting {} executable", ld.to_string_lossy().bold()).green()
             );
-            set_exec(&ld)
+            set_exec(ld)
         }
         _ => Ok(()),
     }

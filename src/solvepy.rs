@@ -94,8 +94,8 @@ pub fn write_stub(opts: &Opts) -> Result<()> {
     let path = Path::new("solve.py");
     if !path.exists() {
         println!("{}", "writing solve.py stub".cyan().bold());
-        fs::write(&path, stub).context(WriteSnafu)?;
-        set_exec(&path).context(SetExecSnafu)?;
+        fs::write(path, stub).context(WriteSnafu)?;
+        set_exec(path).context(SetExecSnafu)?;
     }
     Ok(())
 }
