@@ -58,7 +58,7 @@ fn do_unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result {
 
     let sym_path = tmp_dir.path().join("libc-syms");
 
-    let name = if version_compare::compare_to(&ver.string_short, "2.31", Cmp::Lt).unwrap() {
+    let name = if version_compare::compare_to(&ver.string_short, "2.23", Cmp::Lt).unwrap() {
         format!("libc-{}.so", ver.string_short)
     } else {
         let build_id = elf::get_build_id(libc).context(ElfParseSnafu)?;
