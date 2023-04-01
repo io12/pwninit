@@ -114,11 +114,15 @@ fn bin_patched_path_from_bin(bin: &Path) -> Result<PathBuf> {
     ))
 }
 
-/// Add "_patched" to the end of the binary file name.
+/// Add "_patched" to the end of the binary file name if the binary got patched.
 pub fn bin_patched_path(opts: &Opts) -> Option<PathBuf> {
-    opts.bin
-        .as_ref()
-        .and_then(|bin| bin_patched_path_from_bin(bin).ok())
+    match opts.no_patch_bin {
+        true => None,
+        false => opts
+            .bin
+            .as_ref()
+            .and_then(|bin| bin_patched_path_from_bin(bin).ok()),
+    }
 }
 
 /// Copy the file `bin` to a file with "_patched" appended to the file name.
