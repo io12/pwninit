@@ -44,25 +44,34 @@ const LIBC_FILE_NAME: &str = "libc.so.6";
 ///
 /// If `opts` has a libc, make its directory the RPATH of the binary.
 /// If `opts` has a linker, make it the interpreter of the binary.
+///
+/// Run `patchelf` once per option to avoid broken offsets/symbols (#297)
 fn run_patchelf(bin: &Path, opts: &Opts) -> Result<()> {
     println!(
         "{}",
         format!("running patchelf on {}", bin.to_string_lossy().bold()).green()
     );
 
-    let mut cmd = Command::new("patchelf");
-    cmd.arg(bin);
     if let Some(lib_dir) = opts
         .libc
         .as_ref()
         // Prepend "." in case `libc`'s `parent()` is an empty path.
         .and_then(|libc| Path::new(".").join(libc).parent().map(Path::to_path_buf))
     {
-        cmd.arg("--set-rpath").arg(lib_dir);
+        run_patchelf_option(bin, "--set-rpath", &lib_dir)?;
     };
     if let Some(ld) = &opts.ld {
-        cmd.arg("--set-interpreter").arg(ld);
+        run_patchelf_option(bin, "--set-interpreter", ld)?;
     };
+
+    Ok(())
+}
+
+/// Run `patchelf` on the binary `bin` using the option `option` with the path `argument`.
+fn run_patchelf_option(bin: &Path, option: &str, argument: &PathBuf) -> Result<()> {
+    let mut cmd = Command::new("patchelf");
+    cmd.arg(bin);
+    cmd.arg(option).arg(argument);
 
     let status = cmd.status().context(PatchelfExecSnafu)?;
     if status.success() {
