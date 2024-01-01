@@ -2,21 +2,19 @@
 
 from pwn import *
 
+context.terminal = ['gnome-terminal', '--']
+context.binary = binary = {bin_path}
+context.update(arch='x86_64')
+
 {bindings}
 
-context.binary = {bin_name}
-
-
 def conn():
-    if args.LOCAL:
-        r = process({proc_args})
-        if args.DEBUG:
-            gdb.attach(r)
+    if args.REMOTE:
+        r = remote("addr", 1234)
     else:
-        r = remote("addr", 1337)
-
+        r = process(binary)
+        gdb.attach(r)
     return r
-
 
 def main():
     r = conn()
