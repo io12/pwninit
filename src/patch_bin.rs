@@ -85,24 +85,36 @@ fn run_patchelf_option(bin: &Path, option: &str, argument: &PathBuf) -> Result<(
 ///
 /// If `libc` doesn't have the filename `libc.so.6`,
 /// make a symlink with file name `libc.so.6` in the same directory as `libc`,
-/// and make it point to `libc`.
+/// and make it point to `libc`. If it already exists, do nothing.
 fn symlink_libc(libc: &Path) -> Result<()> {
     let libc_file_name = libc.file_name().context(FileNameSnafu { path: libc })?;
     if libc_file_name != LIBC_FILE_NAME {
         let link = libc.with_file_name(LIBC_FILE_NAME);
-        println!(
-            "{}",
-            format!(
-                "symlinking {} -> {}",
-                link.to_string_lossy().bold(),
-                libc_file_name.to_string_lossy().bold()
-            )
-            .green()
-        );
-        std::os::unix::fs::symlink(libc_file_name, &link).context(SymlinkSnafu {
-            link,
-            target: libc_file_name,
-        })?;
+
+        if link.exists() {
+            println!(
+                "{}",
+                format!(
+                    "{} already exists, not creating symlink",
+                    link.to_string_lossy().bold(),
+                )
+                .yellow()
+            );
+        } else {
+            println!(
+                "{}",
+                format!(
+                    "symlinking {} -> {}",
+                    link.to_string_lossy().bold(),
+                    libc_file_name.to_string_lossy().bold()
+                )
+                .green()
+            );
+            std::os::unix::fs::symlink(libc_file_name, &link).context(SymlinkSnafu {
+                link,
+                target: libc_file_name,
+            })?;
+        }
     }
     Ok(())
 }
