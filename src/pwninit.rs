@@ -49,7 +49,7 @@ pub fn run(opts: Opts) -> Result {
 
     set_ld_exec(&opts).context(SetLdExecSnafu)?;
 
-    if !opts.no_patch_bin {
+    if !opts.no_patch_bin && opts.libc.is_some() {
         patch_bin::patch_bin(&opts).context(PatchBinSnafu)?;
     }
 
