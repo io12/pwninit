@@ -16,7 +16,6 @@ use ex::io;
 use snafu::ResultExt;
 use snafu::Snafu;
 use tempfile::TempDir;
-use version_compare::Cmp;
 
 #[derive(Debug, Snafu)]
 #[allow(clippy::enum_variant_names)]
@@ -58,14 +57,15 @@ fn do_unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result {
 
     let sym_path = tmp_dir.path().join("libc-syms");
 
-    let name = if version_compare::compare_to(&ver.string_short, "2.34", Cmp::Lt).unwrap() {
-        format!("libc-{}.so", ver.string_short)
-    } else {
+    let name1 = format!("libc-{}.so", ver.string_short);
+    let name2 = {
         let build_id = elf::get_build_id(libc).context(ElfParseSnafu)?;
         build_id.chars().skip(2).collect::<String>() + ".debug"
     };
+    let names = [name1.as_str(), name2.as_str()];
 
-    libc_deb::write_ubuntu_pkg_file(&deb_file_name, &name, &sym_path).context(DebSnafu)?;
+    libc_deb::write_ubuntu_pkg_file(&deb_file_name, names.as_slice(), &sym_path)
+        .context(DebSnafu)?;
 
     let out = Command::new("eu-unstrip")
         .arg(libc)

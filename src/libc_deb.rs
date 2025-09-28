@@ -19,15 +19,28 @@ pub static PKG_URL: &str = "https://launchpad.net/ubuntu/+archive/primary/+files
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Helper function that decides whether the tar file `entry` matches
-/// `file_name`
-fn tar_entry_matches<R: Read>(entry: &std::io::Result<tar::Entry<R>>, file_name: &str) -> bool {
-    match entry {
-        Ok(entry) => match entry.path() {
-            Ok(path) => path.file_name() == Some(file_name.as_ref()),
-            Err(_) => false,
-        },
-        Err(_) => false,
+/// one of the `file_names`
+fn tar_entry_matches_any<R: Read>(
+    entry: &std::io::Result<tar::Entry<R>>,
+    file_names: &[&str],
+) -> bool {
+    let Ok(entry) = entry else { return false };
+    let Ok(path) = entry.path() else { return false };
+
+    let res = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .map(|name| file_names.contains(&name))
+        .unwrap_or(false);
+    if res {
+        println!(
+            "{}",
+            format!("Found matching file: {}", path.display())
+                .bold()
+                .green()
+        );
     }
+    res
 }
 
 #[derive(Debug, Snafu)]
@@ -96,7 +109,7 @@ fn request_ubuntu_pkg(deb_file_name: &str) -> Result<reqwest::blocking::Response
 /// extract the file.
 pub fn write_ubuntu_pkg_file<P: AsRef<Path>>(
     deb_file_name: &str,
-    file_name: &str,
+    file_names: &[&str],
     out_path: P,
 ) -> Result<()> {
     let out_path = out_path.as_ref();
@@ -122,15 +135,15 @@ pub fn write_ubuntu_pkg_file<P: AsRef<Path>>(
         match ext {
             b"gz" => {
                 let data = GzDecoder::new(entry);
-                write_ubuntu_data_tar_file(data, file_name, out_path)
+                write_ubuntu_data_tar_file(data, file_names, out_path)
             }
             b"xz" => {
                 let data = LzmaReader::new_decompressor(entry).context(DataUnzipLzmaSnafu)?;
-                write_ubuntu_data_tar_file(data, file_name, out_path)
+                write_ubuntu_data_tar_file(data, file_names, out_path)
             }
             b"zst" => {
                 let data = zstd::stream::read::Decoder::new(entry).context(DataUnzipZstdSnafu)?;
-                write_ubuntu_data_tar_file(data, file_name, out_path)
+                write_ubuntu_data_tar_file(data, file_names, out_path)
             }
             ext => None.context(DataExtSnafu { ext }),
         }?;
@@ -145,14 +158,14 @@ pub fn write_ubuntu_pkg_file<P: AsRef<Path>>(
 /// and extract the file.
 fn write_ubuntu_data_tar_file<R: Read>(
     data_tar_bytes: R,
-    file_name: &str,
+    file_names: &[&str],
     out_path: &Path,
 ) -> Result<()> {
     let mut data_tar = tar::Archive::new(data_tar_bytes);
     let mut entry = data_tar
         .entries()
         .context(DataEntriesSnafu)?
-        .find(|entry| tar_entry_matches(entry, file_name))
+        .find(|entry| tar_entry_matches_any(entry, file_names))
         .context(FileNotFoundSnafu)?
         .context(ReadSnafu)?;
     let mut out_file = File::create(out_path).context(CreateSnafu)?;

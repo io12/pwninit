@@ -36,6 +36,6 @@ pub fn fetch_ld(ver: &LibcVersion) -> Result {
     };
     let out_name = format!("ld-{}.so", ver.string_short);
 
-    libc_deb::write_ubuntu_pkg_file(&deb_file_name, &ld_name, out_name).context(DebSnafu)?;
+    libc_deb::write_ubuntu_pkg_file(&deb_file_name, &[&ld_name], out_name).context(DebSnafu)?;
     Ok(())
 }
