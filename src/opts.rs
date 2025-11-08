@@ -66,6 +66,11 @@ pub struct Opts {
     #[structopt(default_value = "libc")]
     pub template_libc_name: String,
 
+    /// Name of pwntools solve script
+    #[structopt(long)]
+    #[structopt(default_value = "solve.py")]
+    pub template_name: String,
+
     /// Name of linker variable for pwntools solve script
     #[structopt(long)]
     #[structopt(default_value = "ld")]
