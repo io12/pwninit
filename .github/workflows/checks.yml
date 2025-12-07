@@ -9,6 +9,7 @@ jobs:
     steps:
       - name: Pull source
         uses: actions/checkout@v2
+      - run: sudo apt -y install pkg-config libssl-dev liblzma-dev
       - name: Run cargo test
         run: cargo test
         env:
@@ -30,6 +31,7 @@ jobs:
     steps:
       - name: Pull source
         uses: actions/checkout@v2
+      - run: sudo apt -y install pkg-config libssl-dev liblzma-dev
       - name: Run cargo clippy
         run: cargo clippy
         env:
