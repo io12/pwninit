@@ -1,3 +1,4 @@
+use std::io::BufReader;
 use std::io::Read;
 use std::path::Path;
 
@@ -15,8 +16,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 /// Is the binary at `path` an ELF?
 pub fn is_elf(path: &Path) -> Result<bool> {
-    Ok(File::open(path)
-        .context(OpenSnafu)?
+    Ok(BufReader::new(File::open(path).context(OpenSnafu)?)
         .bytes()
         .take(4)
         .collect::<std::io::Result<Vec<u8>>>()
