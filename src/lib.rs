@@ -12,6 +12,7 @@ mod set_exec;
 mod solvepy;
 mod unstrip_libc;
 mod warn;
+mod proc_vmlinux;
 
 pub use crate::pwninit::run;
 pub use crate::pwninit::Result;
@@ -43,6 +44,26 @@ fn path_contains(path: &Path, pattern: &[u8]) -> bool {
     path.file_name()
         .map(|name| find_bytes(name.as_bytes(), pattern).is_some())
         .unwrap_or(false)
+}
+
+fn path_begins(path: &Path, prefix: &str) -> bool {
+    if let Some(filename) = path.file_name() {
+        if let Some(filename_str) = filename.to_str() {
+            filename_str.starts_with(prefix)
+        } else {
+            false
+        }
+    } else {
+        false
+    }
+}
+
+pub fn is_vmlinux(path: &Path) -> elf::detect::Result<bool> {
+    Ok(is_elf(path)? && path_begins(path, "vmlinux"))
+}
+
+pub fn is_bzimage(path: &Path) -> elf::detect::Result<bool> {
+    Ok(path_begins(path, "bzImage"))
 }
 
 /// Detect if `path` is the provided libc
@@ -99,6 +120,23 @@ pub fn set_bin_exec(opts: &Opts) -> io::Result<()> {
             }
         }
         None => "binary not found".warn("failed setting binary to be executable"),
+    }
+
+    Ok(())
+}
+
+pub fn set_vmlinux_exec(opts: &Opts) -> io::Result<()> {
+    match &opts.vmlinux {
+        Some(vmlinux) => {
+            if !vmlinux.is_executable() {
+                println!(
+                    "{}", 
+                    format!("setting {} executable", vmlinux.to_string_lossy().bold()).green()
+                );
+                set_exec(vmlinux)?;
+            }
+        },
+        None => "vmlinux not found".warn("failed setting vmlinux to be executable")
     }
 
     Ok(())

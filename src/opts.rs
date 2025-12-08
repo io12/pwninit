@@ -5,6 +5,9 @@ use crate::is_bin;
 use crate::is_ld;
 use crate::is_libc;
 
+use crate::is_vmlinux;
+use crate::is_bzimage;
+
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -78,11 +81,34 @@ pub struct Opts {
     /// Disable generating template solve script
     #[structopt(long)]
     pub no_template: bool,
+
+    /// Kernel-land initialization
+    #[structopt(long)]
+    pub ker: bool,
+
+    /// Name of vmlinux binary
+    #[structopt(long)]
+    #[setters(generate)]
+    pub vmlinux: Option<PathBuf>,
+
+    /// Name of bzImage file
+    #[structopt(long)]
+    #[setters(generate)]
+    pub bzimage: Option<PathBuf>,
+
+    /// Disable extraction of vmlinux from bzImage
+    #[structopt(long)]
+    pub no_extract_vmlinux: bool,
+
+    /// Disable patching vmlinux with vmlinux-to-elf
+    #[structopt(long)]
+    pub no_patch_vmlinux: bool,
 }
 
 impl Opts {
     /// Print the locations of known files (binary, libc, linker)
     pub fn print(&self) {
+        println!("Found following {}-land challenge binaries:", if self.ker { "kernel" } else {"user"});
         let f = |opt_path: &Option<PathBuf>, header: &str, color| {
             if let Some(path) = opt_path {
                 println!(
@@ -93,9 +119,14 @@ impl Opts {
             }
         };
 
-        f(&self.bin, "bin", Color::BrightBlue);
-        f(&self.libc, "libc", Color::Yellow);
-        f(&self.ld, "ld", Color::Green);
+        if self.ker {
+            f(&self.bzimage, "bzImage", Color::BrightBlue);
+            f(&self.vmlinux, "vmlinux",  Color::Green);
+        } else {
+            f(&self.bin, "bin", Color::BrightBlue);
+            f(&self.libc, "libc", Color::Yellow);
+            f(&self.ld, "ld", Color::Green);
+        }
     }
 
     /// For the unspecified files, try to guess their path
@@ -119,10 +150,17 @@ impl Opts {
             Ok(if pred(&path)? { Some(path) } else { None })
         };
 
-        Ok(self
-            .clone()
-            .with_bin(self.bin.or(f(is_bin)?))
-            .with_libc(self.libc.or(f(is_libc)?))
-            .with_ld(self.ld.or(f(is_ld)?)))
+        if self.ker {
+            Ok(self
+                .clone()
+                .with_bzimage(self.bzimage.or(f(is_bzimage)?))
+                .with_vmlinux(self.vmlinux.or(f(is_vmlinux)?)))
+        } else {
+            Ok(self
+                .clone()
+                .with_bin(self.bin.or(f(is_bin)?))
+                .with_libc(self.libc.or(f(is_libc)?))
+                .with_ld(self.ld.or(f(is_ld)?)))
+        }
     }
 }
