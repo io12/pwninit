@@ -30,6 +30,8 @@ Run `pwninit` in a directory with the relevant files and it will detect which on
 
 If you don't like the default template, you can use your own. Just specify `--template-path <path>`. Check [template.py](src/template.py) for the template format. The names of the `exe`, `libc`, and `ld` bindings can be customized with `--template-bin-name`, `--template-libc-name`, and `--template-ld-name`.
 
+The name of the solve script can be configured with `--template-name <name>`. For example: `--template-name exploit.py` will generate a solve script with the name `exploit.py`.
+
 ##### Persisting custom `solve.py`
 
 You can make `pwninit` load your custom template automatically by adding an alias to your `~/.bashrc`.
