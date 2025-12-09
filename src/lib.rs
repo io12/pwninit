@@ -76,7 +76,10 @@ fn visit_libc(opts: &Opts, libc: &Path) {
         }
     };
     maybe_fetch_ld(opts, &ver).warn("failed fetching ld");
-    unstrip_libc(libc, &ver).warn("failed unstripping libc");
+
+    if !opts.no_unstrip_libc {
+        unstrip_libc(libc, &ver).warn("failed unstripping libc");
+    }
 }
 
 /// Same as `visit_libc()`, but doesn't do anything if no libc is found

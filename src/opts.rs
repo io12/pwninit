@@ -75,6 +75,10 @@ pub struct Opts {
     #[structopt(long)]
     pub no_patch_bin: bool,
 
+    /// Disable unstripping the libc
+    #[structopt(long)]
+    pub no_unstrip_libc: bool,
+
     /// Disable generating template solve script
     #[structopt(long)]
     pub no_template: bool,
