@@ -14,6 +14,12 @@ use snafu::ResultExt;
 use snafu::Snafu;
 use twoway::find_bytes;
 
+#[derive(Copy, Clone)]
+pub enum Distro {
+    Ubuntu,
+    Debian,
+}
+
 /// Libc version information
 pub struct LibcVersion {
     /// Long string representation of a libc version
@@ -28,6 +34,9 @@ pub struct LibcVersion {
 
     /// Architecture of libc
     pub arch: CpuArch,
+
+    /// Distribution of libc
+    pub distro: Distro,
 }
 
 impl fmt::Display for LibcVersion {
@@ -54,32 +63,34 @@ pub enum Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+const IDENTIFIER: [(&[u8], Distro); 3] = [
+    (b"GNU C Library (Ubuntu GLIBC ", Distro::Ubuntu),
+    (b"GNU C Library (Ubuntu EGLIBC ", Distro::Ubuntu),
+    (b"GNU C Library (Debian GLIBC ", Distro::Debian),
+];
 
 impl LibcVersion {
     /// Detect the version of a libc
     pub fn detect(libc: &Path) -> Result<Self> {
         let bytes = fs::read(libc).context(ReadSnafu)?;
-        let string = Self::version_string_from_bytes(&bytes)?;
+        let (string, distro) = Self::version_str_distro_from_bytes(&bytes)?;
         let string_short = string.split('-').next().context(NotFoundSnafu)?.to_string();
 
         Ok(Self {
             string,
             string_short,
             arch: CpuArch::from_elf_bytes(libc, &bytes).context(ArchSnafu)?,
+            distro,
         })
     }
 
     /// Extract the long version string from the bytes of a libc
-    fn version_string_from_bytes(libc: &[u8]) -> Result<String> {
-        let split: [&[u8]; 2] = [
-            b"GNU C Library (Ubuntu GLIBC ",
-            b"GNU C Library (Ubuntu EGLIBC ",
-        ];
-        let pos = split
+    fn version_str_distro_from_bytes(libc: &[u8]) -> Result<(String, Distro)> {
+        let (pos, distro) = IDENTIFIER
             .iter()
-            .find_map(|cut| {
+            .find_map(|(cut, distro)| {
                 let pos = find_bytes(libc, cut);
-                Some(pos? + cut.len())
+                Some((pos? + cut.len(), distro))
             })
             .context(NotFoundSnafu)?;
         let ver_str = &libc[pos..];
@@ -89,6 +100,6 @@ impl LibcVersion {
             .context(NotFoundSnafu)?;
         let ver_str = &ver_str[..pos];
         let ver_str = std::str::from_utf8(ver_str).context(Utf8Snafu)?.to_string();
-        Ok(ver_str)
+        Ok((ver_str, *distro))
     }
 }

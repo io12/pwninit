@@ -13,8 +13,12 @@ use snafu::OptionExt;
 use snafu::ResultExt;
 use snafu::Snafu;
 
+use crate::libc_version::Distro;
+
 /// URL for Ubuntu glibc packages
-pub static PKG_URL: &str = "https://launchpad.net/ubuntu/+archive/primary/+files/";
+pub static UBUNTU_PKG_URL: &str = "https://launchpad.net/ubuntu/+archive/primary/+files/";
+/// URL for Debian glibc packages
+pub static DEBIAN_PKG_URL: &str = "https://deb.debian.org/debian/pool/main/g/glibc/";
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -101,20 +105,30 @@ fn request_url(url: &str) -> Result<reqwest::blocking::Response> {
 /// Try to get a glibc deb package with a given filename, checking both current
 /// and archive Ubuntu mirrors
 fn request_ubuntu_pkg(deb_file_name: &str) -> Result<reqwest::blocking::Response> {
-    let url = format!("{}/{}", PKG_URL, deb_file_name);
+    let url = format!("{}/{}", UBUNTU_PKG_URL, deb_file_name);
+    request_url(&url)
+}
+
+/// Try to get a glibc deb package with a given filename, checking current Debian mirrors
+fn request_debian_pkg(deb_file_name: &str) -> Result<reqwest::blocking::Response> {
+    let url = format!("{}/{}", DEBIAN_PKG_URL, deb_file_name);
     request_url(&url)
 }
 
 /// Download the glibc deb package with a given name, find a file inside it, and
 /// extract the file.
-pub fn write_ubuntu_pkg_file<P: AsRef<Path>>(
+pub fn write_pkg_file<P: AsRef<Path>>(
     deb_file_name: &str,
     file_names: &[&str],
     out_path: P,
+    distro: Distro,
 ) -> Result<()> {
     let out_path = out_path.as_ref();
 
-    let deb_bytes = request_ubuntu_pkg(deb_file_name)?;
+    let deb_bytes = match distro {
+        Distro::Ubuntu => request_ubuntu_pkg(deb_file_name)?,
+        Distro::Debian => request_debian_pkg(deb_file_name)?,
+    };
     let mut deb = ar::Archive::new(deb_bytes);
 
     // Try to find data.tar in package
