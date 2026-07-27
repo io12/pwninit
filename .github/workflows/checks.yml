@@ -43,7 +43,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Pull source
-        uses: actions/checkout@v2
-      - name: Set permissions
-        run: chmod --recursive 777 .
-      - run: docker run --mount type=bind,source="$(pwd)",target=/home/rust/src io12/rust-musl-builder-lzma cargo build --release
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Set up Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Build static binary
+        run: nix build .#static -L
+
+      - name: Check the binary
+        run: nix run nixpkgs#file -- result/bin/pwninit

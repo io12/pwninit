@@ -10,16 +10,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Pull source
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
 
-      - name: Set permissions
-        run: chmod --recursive 777 .
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Set up Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: Build statically-linked musl binary
-        run: docker run --mount type=bind,source="$(pwd)",target=/home/rust/src io12/rust-musl-builder-lzma cargo build --release
+        run: nix build .#static -L
 
       - name: Copy binary to working directory
-        run: cp target/x86_64-unknown-linux-musl/release/pwninit .
+        run: |
+          cp result/bin/pwninit .
+          chmod +w pwninit
 
       - name: Strip binary
         run: strip pwninit
