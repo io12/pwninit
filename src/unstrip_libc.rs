@@ -64,7 +64,7 @@ fn do_unstrip_libc(libc: &Path, ver: &LibcVersion) -> Result {
     };
     let names = [name1.as_str(), name2.as_str()];
 
-    libc_deb::write_ubuntu_pkg_file(&deb_file_name, names.as_slice(), &sym_path)
+    libc_deb::write_pkg_file(&deb_file_name, names.as_slice(), &sym_path, ver.distro)
         .context(DebSnafu)?;
 
     let out = Command::new("eu-unstrip")
