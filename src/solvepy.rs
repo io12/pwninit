@@ -87,13 +87,16 @@ fn make_stub(opts: &Opts) -> Result<String> {
     .context(FmtSnafu)
 }
 
-/// Write script produced with `make_stub()` to `solve.py` in the
-/// specified directory, unless a `solve.py` already exists
+/// Write script produced with `make_stub()` to `opts.template_name` in the
+/// specified directory, unless a `opts.template_name` already exists
 pub fn write_stub(opts: &Opts) -> Result<()> {
     let stub = make_stub(opts)?;
-    let path = Path::new("solve.py");
+    let path = Path::new(&opts.template_name);
     if !path.exists() {
-        println!("{}", "writing solve.py stub".cyan().bold());
+        println!(
+            "{}",
+            format!("writing {} stub", opts.template_name).cyan().bold()
+        );
         fs::write(path, stub).context(WriteSnafu)?;
         set_exec(path).context(SetExecSnafu)?;
     }
